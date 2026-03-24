@@ -1,0 +1,254 @@
+:root {
+  color-scheme: dark;
+  font-family: "IBM Plex Sans", "Noto Sans JP", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(125, 211, 252, 0.12), transparent 22%),
+    radial-gradient(circle at top right, rgba(244, 114, 182, 0.1), transparent 26%),
+    linear-gradient(180deg, #07111d 0%, #0f172a 100%);
+  color: #e2e8f0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+}
+
+button,
+code {
+  font: inherit;
+}
+
+code {
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 32px;
+}
+
+.page-header {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
+  align-items: start;
+  margin-bottom: 24px;
+}
+
+.eyebrow,
+.selection-label {
+  margin: 0 0 8px;
+  color: #7dd3fc;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 0.95;
+}
+
+.lede,
+.selection-meta {
+  margin: 10px 0 0;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.prototype-panel,
+.selection-panel {
+  background: rgba(8, 15, 28, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 20px;
+  box-shadow: 0 20px 70px rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(18px);
+}
+
+.selection-panel {
+  padding: 18px 20px;
+  min-height: 120px;
+}
+
+.selection-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.prototype-panel {
+  overflow: hidden;
+}
+
+.dag-view {
+  min-height: 480px;
+}
+
+.dag-scroll {
+  display: grid;
+  grid-template-columns: 220px auto minmax(0, 1fr);
+  overflow: auto;
+  max-height: calc(100vh - 220px);
+}
+
+.ref-column {
+  min-width: 220px;
+  background:
+    linear-gradient(180deg, rgba(9, 18, 34, 0.96), rgba(8, 15, 28, 0.94));
+  border-right: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.ref-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0 14px 0 16px;
+  border: 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ref-row:hover {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.ref-row-selected {
+  background: rgba(148, 163, 184, 0.14);
+}
+
+.graph-column {
+  display: block;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(8, 15, 28, 0.96));
+  border-right: 1px solid rgba(148, 163, 184, 0.16);
+  cursor: pointer;
+}
+
+.commit-list {
+  min-width: 700px;
+}
+
+.commit-row {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  align-items: center;
+  width: 100%;
+  padding: 0 18px;
+  border: 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.commit-row:hover {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.commit-row-selected {
+  background: rgba(148, 163, 184, 0.14);
+}
+
+.lane-swatch {
+  width: 4px;
+  height: 22px;
+  border-radius: 999px;
+}
+
+.commit-message-group {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0 14px;
+}
+
+.ref-list {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: 20px;
+}
+
+.ref-pill {
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.ref-pill-head {
+  background: rgba(248, 250, 252, 0.14);
+  color: #f8fafc;
+}
+
+.ref-pill-branch {
+  background: rgba(125, 211, 252, 0.16);
+  color: #bae6fd;
+}
+
+.ref-pill-tag {
+  background: rgba(251, 191, 36, 0.16);
+  color: #fde68a;
+}
+
+.commit-message {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.commit-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  color: #94a3b8;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.commit-meta code {
+  color: #cbd5e1;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    padding: 20px;
+  }
+
+  .page-header {
+    grid-template-columns: 1fr;
+  }
+
+  .dag-scroll {
+    max-height: none;
+  }
+
+  .ref-column {
+    min-width: 180px;
+  }
+
+  .commit-list {
+    min-width: 560px;
+  }
+}

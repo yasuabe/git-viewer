@@ -1,0 +1,11 @@
+# AGENTS.md
+
+このリポジトリでは、Markdown ファイルを以下の役割で運用する。
+
+- `README.md`: 外部向けのアプリケーション概要
+- `CLAUDE.md`: Claude Code 用の運用メモ
+- `AGENTS.md`: Codex CLI 用の運用メモ
+- `PLAN.md`: 思いつき、アイデア、覚書
+- `SPEC.md`: 仕様、アプリケーションのあるべき姿
+- `BACKLOG.md`: 作業の道標、進捗管理
+- `KNOWLEDGE.md`: 開発中に得られた学びの蓄積
