@@ -406,6 +406,38 @@ h1 {
   color: #cbd5e1;
 }
 
+.diff-view-shell {
+  min-height: 720px;
+  padding: 20px 24px 28px;
+  background:
+    linear-gradient(180deg, rgba(12, 18, 33, 0.92), rgba(8, 15, 28, 0.98));
+}
+
+.diff-view-root {
+  color: #dbe4f0;
+}
+
+.diff-view-root .d2h-wrapper {
+  background: transparent;
+}
+
+.diff-view-root .d2h-file-wrapper {
+  margin-bottom: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 16px 50px rgba(2, 6, 23, 0.3);
+}
+
+.diff-view-root .d2h-diff-table {
+  font-size: 13px;
+}
+
+.diff-view-root .hljs {
+  background: transparent;
+  color: #dbe4f0;
+}
+
 @media (max-width: 900px) {
   .app-shell {
     padding: 20px;
@@ -438,5 +470,9 @@ h1 {
 
   .commit-list {
     min-width: 560px;
+  }
+
+  .diff-view-shell {
+    padding-inline: 12px;
   }
 }
