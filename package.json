@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:dag": "vite --config vite.workbench-dag.config.ts",
+    "dev:diff": "vite --config vite.workbench-diff.config.ts",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },

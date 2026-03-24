@@ -1,4 +1,4 @@
-import type { CommitNode, LaneEntry, ParentLink } from "../types/git";
+import type { CommitNode, LaneEntry, ParentLink } from "../../../types/git";
 
 const LANE_COLORS = ["#7dd3fc", "#f472b6", "#fbbf24", "#34d399", "#c084fc", "#fb7185"];
 

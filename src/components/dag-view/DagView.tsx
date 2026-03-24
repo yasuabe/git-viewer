@@ -1,7 +1,7 @@
 import { CommitList } from "./CommitList";
 import { GraphColumn } from "./GraphColumn";
 import { RefColumn } from "./RefColumn";
-import type { CommitNode, LaneEntry, SelectedCommit, WipState } from "../types/git";
+import type { CommitNode, LaneEntry, SelectedCommit, WipState } from "../../types/git";
 
 type DagViewProps = {
   commits: CommitNode[];

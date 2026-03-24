@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { DagView } from "./components/DagView";
-import { dummyScenarios } from "./data/dummy-commits";
-import { assignLanes } from "./layout/assign-lanes";
-import type { DummyScenario, SelectedCommit, WipFile } from "./types/git";
+import { DagView } from "../../src/components/dag-view/DagView";
+import { assignLanes } from "../../src/components/dag-view/layout/assign-lanes";
+import { dummyScenarios } from "./dummy-data";
+import type { DummyScenario, SelectedCommit, WipFile } from "../../src/types/git";
 
 function initialSelectionForScenario(scenario: DummyScenario): SelectedCommit {
   if (scenario.wip) {
@@ -46,7 +46,7 @@ export default function App() {
     <main className="app-shell">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Phase 0 Prototype</p>
+          <p className="eyebrow">Workbench / DAG</p>
           <h1>Git Viewer DAG Sandbox</h1>
           <p className="lede">
             ダミーデータを使って、レーン計算と DAG 表示の感触を先に詰める。

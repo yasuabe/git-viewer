@@ -1,4 +1,4 @@
-import type { CommitNode, DummyScenario } from "../types/git";
+import type { CommitNode, DummyScenario } from "../../src/types/git";
 
 const baselineCommits: CommitNode[] = [
   {
@@ -202,13 +202,13 @@ export const dummyScenarios: DummyScenario[] = [
     commits: baselineCommits,
     wip: {
       unstaged: [
-        { path: "src/components/GraphColumn.tsx", status: "M" },
+        { path: "src/components/dag-view/GraphColumn.tsx", status: "M" },
         { path: "src/styles/global.css", status: "M" },
         { path: "docs/PLAN.md", status: "A" },
       ],
       staged: [
-        { path: "src/data/dummy-commits.ts", status: "M" },
-        { path: "src/components/RefColumn.tsx", status: "A" },
+        { path: "workbench/dag/dummy-data.ts", status: "M" },
+        { path: "src/components/dag-view/RefColumn.tsx", status: "A" },
       ],
     },
   },

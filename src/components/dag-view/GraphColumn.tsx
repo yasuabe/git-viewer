@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import type { CommitNode, LaneEntry, SelectedCommit, WipState } from "../types/git";
+import type { CommitNode, LaneEntry, SelectedCommit, WipState } from "../../types/git";
 import { ROW_HEIGHT } from "./dag-view-constants";
 
 const LANE_WIDTH = 18;

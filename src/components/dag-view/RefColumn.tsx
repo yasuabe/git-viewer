@@ -1,4 +1,4 @@
-import type { CommitNode, Ref, SelectedCommit, WipState } from "../types/git";
+import type { CommitNode, Ref, SelectedCommit, WipState } from "../../types/git";
 import { ROW_HEIGHT } from "./dag-view-constants";
 
 type RefColumnProps = {
