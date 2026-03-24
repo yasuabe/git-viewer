@@ -69,6 +69,7 @@ type ParentLink = {
   parentHash: string;
   fromLane: number;
   toLane: number;
+  color: string;
   type: "straight" | "merge";
 };
 ```

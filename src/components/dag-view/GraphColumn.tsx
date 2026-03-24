@@ -63,6 +63,16 @@ export function GraphColumn({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const hasWipRow = Boolean(wip);
 
+  const laneEntryLookup = useMemo(() => {
+    const lookup = new Map<string, LaneEntry>();
+
+    laneEntries.forEach((laneEntry) => {
+      lookup.set(laneEntry.hash, laneEntry);
+    });
+
+    return lookup;
+  }, [laneEntries]);
+
   const rowLookup = useMemo(() => {
     const lookup = new Map<string, number>();
 
@@ -89,6 +99,7 @@ export function GraphColumn({
     return mainIndex >= 0 ? mainIndex : 0;
   }, [commits]);
 
+  const headCommitHash = commits[headCommitIndex]?.hash;
   const laneCount = laneEntries.reduce((max, laneEntry) => Math.max(max, laneEntry.lane + 1), 1);
   const canvasWidth = laneCount * LANE_WIDTH + HORIZONTAL_PADDING * 2;
   const canvasHeight = (commits.length + (hasWipRow ? 1 : 0)) * ROW_HEIGHT;
@@ -160,16 +171,17 @@ export function GraphColumn({
     });
 
     if (hasWipRow) {
-      const wipLane = laneEntries[headCommitIndex]?.lane ?? 0;
+      const headLaneEntry = headCommitHash ? laneEntryLookup.get(headCommitHash) : undefined;
+      const wipLane = headLaneEntry?.lane ?? 0;
       const wipX = getCommitX(wipLane);
       const wipY = ROW_HEIGHT / 2;
-      const headRow = rowLookup.get(commits[headCommitIndex]?.hash);
+      const headRow = headCommitHash ? rowLookup.get(headCommitHash) : undefined;
 
       if (headRow !== undefined) {
         const headY = headRow * ROW_HEIGHT + ROW_HEIGHT / 2;
 
         context.save();
-        context.strokeStyle = laneEntries[headCommitIndex]?.color ?? "#7dd3fc";
+        context.strokeStyle = headLaneEntry?.color ?? "#7dd3fc";
         context.lineWidth = 2;
         context.setLineDash([3, 3]);
         context.beginPath();
@@ -180,7 +192,7 @@ export function GraphColumn({
       }
 
       context.save();
-      context.strokeStyle = laneEntries[headCommitIndex]?.color ?? "#7dd3fc";
+      context.strokeStyle = headLaneEntry?.color ?? "#7dd3fc";
       context.lineWidth = 2;
       context.setLineDash([2, 3]);
       context.beginPath();
@@ -226,7 +238,9 @@ export function GraphColumn({
     canvasWidth,
     commits,
     hasWipRow,
+    headCommitHash,
     headCommitIndex,
+    laneEntryLookup,
     laneEntries,
     rowLookup,
     selectedCommit,
