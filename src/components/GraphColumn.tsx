@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef } from "react";
-import type { CommitNode, LaneEntry, SelectedCommit } from "../types/git";
+import type { CommitNode, LaneEntry, SelectedCommit, WipState } from "../types/git";
 import { ROW_HEIGHT } from "./dag-view-constants";
 
 const LANE_WIDTH = 18;
 const NODE_RADIUS = 5;
 const HORIZONTAL_PADDING = 18;
 const TURN_RADIUS = 6;
+const WIP_RADIUS = 8;
 
 type GraphColumnProps = {
   commits: CommitNode[];
   laneEntries: LaneEntry[];
+  wip?: WipState;
   selectedCommit: SelectedCommit;
   onSelectCommit: (selectedCommit: SelectedCommit) => void;
 };
@@ -32,42 +34,64 @@ function drawOrthogonalLink(
 
   const directionX = Math.sign(toX - fromX);
   const directionY = Math.sign(toY - fromY);
-  const turnY = fromY + (toY - fromY) / 2;
+  const trackX = Math.max(fromX, toX);
   const radius = Math.min(
     TURN_RADIUS,
-    Math.abs(toX - fromX) / 2,
-    Math.abs(turnY - fromY),
-    Math.abs(toY - turnY),
+    Math.abs(toX - fromX),
+    Math.abs(toY - fromY),
   );
 
-  context.lineTo(fromX, turnY - directionY * radius);
-  context.quadraticCurveTo(fromX, turnY, fromX + directionX * radius, turnY);
-  context.lineTo(toX - directionX * radius, turnY);
-  context.quadraticCurveTo(toX, turnY, toX, turnY + directionY * radius);
-  context.lineTo(toX, toY);
+  if (fromX === trackX) {
+    context.lineTo(fromX, toY - directionY * radius);
+    context.quadraticCurveTo(fromX, toY, fromX + directionX * radius, toY);
+    context.lineTo(toX, toY);
+    return;
+  }
+
+  context.lineTo(trackX - directionX * radius, fromY);
+  context.quadraticCurveTo(trackX, fromY, trackX, fromY + directionY * radius);
+  context.lineTo(trackX, toY);
 }
 
 export function GraphColumn({
   commits,
   laneEntries,
+  wip,
   selectedCommit,
   onSelectCommit,
 }: GraphColumnProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const hasWipRow = Boolean(wip);
 
   const rowLookup = useMemo(() => {
     const lookup = new Map<string, number>();
 
     commits.forEach((commit, index) => {
-      lookup.set(commit.hash, index);
+      lookup.set(commit.hash, index + (hasWipRow ? 1 : 0));
     });
 
     return lookup;
+  }, [commits, hasWipRow]);
+
+  const headCommitIndex = useMemo(() => {
+    const explicitHeadIndex = commits.findIndex((commit) =>
+      commit.refs.some((ref) => ref.type === "head"),
+    );
+
+    if (explicitHeadIndex >= 0) {
+      return explicitHeadIndex;
+    }
+
+    const mainIndex = commits.findIndex((commit) =>
+      commit.refs.some((ref) => ref.type === "branch" && ref.name === "main"),
+    );
+
+    return mainIndex >= 0 ? mainIndex : 0;
   }, [commits]);
 
   const laneCount = laneEntries.reduce((max, laneEntry) => Math.max(max, laneEntry.lane + 1), 1);
   const canvasWidth = laneCount * LANE_WIDTH + HORIZONTAL_PADDING * 2;
-  const canvasHeight = commits.length * ROW_HEIGHT;
+  const canvasHeight = (commits.length + (hasWipRow ? 1 : 0)) * ROW_HEIGHT;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -91,18 +115,22 @@ export function GraphColumn({
     context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
     context.clearRect(0, 0, canvasWidth, canvasHeight);
 
-    if (selectedCommit.type === "commit") {
-      const selectedRow = rowLookup.get(selectedCommit.hash);
+    const selectedRow =
+      selectedCommit.type === "wip"
+        ? hasWipRow
+          ? 0
+          : undefined
+        : rowLookup.get(selectedCommit.hash);
 
-      if (selectedRow !== undefined) {
-        context.fillStyle = "rgba(148, 163, 184, 0.14)";
-        context.fillRect(0, selectedRow * ROW_HEIGHT, canvasWidth, ROW_HEIGHT);
-      }
+    if (selectedRow !== undefined) {
+      context.fillStyle = "rgba(148, 163, 184, 0.14)";
+      context.fillRect(0, selectedRow * ROW_HEIGHT, canvasWidth, ROW_HEIGHT);
     }
 
     laneEntries.forEach((laneEntry, rowIndex) => {
+      const actualRowIndex = rowIndex + (hasWipRow ? 1 : 0);
       const fromX = getCommitX(laneEntry.lane);
-      const fromY = rowIndex * ROW_HEIGHT + ROW_HEIGHT / 2;
+      const fromY = actualRowIndex * ROW_HEIGHT + ROW_HEIGHT / 2;
 
       laneEntry.parentLinks.forEach((link) => {
         const parentRow = rowLookup.get(link.parentHash);
@@ -131,9 +159,47 @@ export function GraphColumn({
       });
     });
 
+    if (hasWipRow) {
+      const wipLane = laneEntries[headCommitIndex]?.lane ?? 0;
+      const wipX = getCommitX(wipLane);
+      const wipY = ROW_HEIGHT / 2;
+      const headRow = rowLookup.get(commits[headCommitIndex]?.hash);
+
+      if (headRow !== undefined) {
+        const headY = headRow * ROW_HEIGHT + ROW_HEIGHT / 2;
+
+        context.save();
+        context.strokeStyle = laneEntries[headCommitIndex]?.color ?? "#7dd3fc";
+        context.lineWidth = 2;
+        context.setLineDash([3, 3]);
+        context.beginPath();
+        context.moveTo(wipX, wipY + WIP_RADIUS);
+        context.lineTo(wipX, headY - NODE_RADIUS);
+        context.stroke();
+        context.restore();
+      }
+
+      context.save();
+      context.strokeStyle = laneEntries[headCommitIndex]?.color ?? "#7dd3fc";
+      context.lineWidth = 2;
+      context.setLineDash([2, 3]);
+      context.beginPath();
+      context.arc(wipX, wipY, WIP_RADIUS, 0, Math.PI * 2);
+      context.stroke();
+      context.restore();
+
+      if (selectedCommit.type === "wip") {
+        context.beginPath();
+        context.strokeStyle = "#f8fafc";
+        context.lineWidth = 2;
+        context.arc(wipX, wipY, WIP_RADIUS + 4, 0, Math.PI * 2);
+        context.stroke();
+      }
+    }
+
     laneEntries.forEach((laneEntry, rowIndex) => {
       const x = getCommitX(laneEntry.lane);
-      const y = rowIndex * ROW_HEIGHT + ROW_HEIGHT / 2;
+      const y = (rowIndex + (hasWipRow ? 1 : 0)) * ROW_HEIGHT + ROW_HEIGHT / 2;
       const isSelected =
         selectedCommit.type === "commit" && selectedCommit.hash === laneEntry.hash;
 
@@ -155,7 +221,16 @@ export function GraphColumn({
         context.stroke();
       }
     });
-  }, [canvasHeight, canvasWidth, commits, laneEntries, rowLookup, selectedCommit]);
+  }, [
+    canvasHeight,
+    canvasWidth,
+    commits,
+    hasWipRow,
+    headCommitIndex,
+    laneEntries,
+    rowLookup,
+    selectedCommit,
+  ]);
 
   return (
     <canvas
@@ -166,8 +241,17 @@ export function GraphColumn({
       onClick={(event) => {
         const bounds = event.currentTarget.getBoundingClientRect();
         const offsetY = event.clientY - bounds.top;
-        const rowIndex = Math.max(0, Math.min(commits.length - 1, Math.floor(offsetY / ROW_HEIGHT)));
-        const commit = commits[rowIndex];
+        const rowIndex = Math.max(
+          0,
+          Math.min(commits.length + (hasWipRow ? 1 : 0) - 1, Math.floor(offsetY / ROW_HEIGHT)),
+        );
+
+        if (hasWipRow && rowIndex === 0) {
+          onSelectCommit({ type: "wip" });
+          return;
+        }
+
+        const commit = commits[rowIndex - (hasWipRow ? 1 : 0)];
 
         onSelectCommit({ type: "commit", hash: commit.hash });
       }}

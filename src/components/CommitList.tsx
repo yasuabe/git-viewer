@@ -1,9 +1,10 @@
-import type { CommitNode, LaneEntry, SelectedCommit } from "../types/git";
+import type { CommitNode, LaneEntry, SelectedCommit, WipState } from "../types/git";
 import { ROW_HEIGHT } from "./dag-view-constants";
 
 type CommitListProps = {
   commits: CommitNode[];
   laneEntries: LaneEntry[];
+  wip?: WipState;
   selectedCommit: SelectedCommit;
   onSelectCommit: (selectedCommit: SelectedCommit) => void;
 };
@@ -11,11 +12,30 @@ type CommitListProps = {
 export function CommitList({
   commits,
   laneEntries,
+  wip,
   selectedCommit,
   onSelectCommit,
 }: CommitListProps) {
+  const wipChangeCount = wip ? wip.unstaged.length + wip.staged.length : 0;
+
   return (
-    <div className="commit-list" style={{ height: commits.length * ROW_HEIGHT }}>
+    <div className="commit-list" style={{ height: (commits.length + (wip ? 1 : 0)) * ROW_HEIGHT }}>
+      {wip ? (
+        <button
+          className={`commit-row commit-row-wip${selectedCommit.type === "wip" ? " commit-row-selected" : ""}`}
+          type="button"
+          style={{ height: ROW_HEIGHT }}
+          onClick={() => onSelectCommit({ type: "wip" })}
+        >
+          <span className="lane-swatch lane-swatch-hidden" aria-hidden="true" />
+          <span className="commit-message-group">
+            <span className="wip-row-title">// WIP</span>
+          </span>
+          <span className="commit-meta">
+            <span className="wip-row-meta">{wipChangeCount} changes</span>
+          </span>
+        </button>
+      ) : null}
       {commits.map((commit, index) => {
         const laneEntry = laneEntries[index];
         const isSelected =

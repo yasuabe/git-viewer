@@ -1,8 +1,9 @@
-import type { CommitNode, Ref, SelectedCommit } from "../types/git";
+import type { CommitNode, Ref, SelectedCommit, WipState } from "../types/git";
 import { ROW_HEIGHT } from "./dag-view-constants";
 
 type RefColumnProps = {
   commits: CommitNode[];
+  wip?: WipState;
   selectedCommit: SelectedCommit;
   onSelectCommit: (selectedCommit: SelectedCommit) => void;
 };
@@ -21,11 +22,23 @@ function refClassName(ref: Ref): string {
 
 export function RefColumn({
   commits,
+  wip,
   selectedCommit,
   onSelectCommit,
 }: RefColumnProps) {
   return (
-    <div className="ref-column" style={{ height: commits.length * ROW_HEIGHT }}>
+    <div className="ref-column" style={{ height: (commits.length + (wip ? 1 : 0)) * ROW_HEIGHT }}>
+      {wip ? (
+        <button
+          className={`ref-row ref-row-wip${selectedCommit.type === "wip" ? " ref-row-selected" : ""}`}
+          type="button"
+          style={{ height: ROW_HEIGHT }}
+          onClick={() => onSelectCommit({ type: "wip" })}
+          aria-label="Select working tree changes"
+        >
+          <span className="ref-list" />
+        </button>
+      ) : null}
       {commits.map((commit) => {
         const isSelected =
           selectedCommit.type === "commit" && selectedCommit.hash === commit.hash;

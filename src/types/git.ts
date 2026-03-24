@@ -30,3 +30,21 @@ export type LaneEntry = {
 };
 
 export type SelectedCommit = { type: "commit"; hash: string } | { type: "wip" };
+
+export type WipFile = {
+  path: string;
+  status: "A" | "M" | "D" | "R";
+};
+
+export type WipState = {
+  unstaged: WipFile[];
+  staged: WipFile[];
+};
+
+export type DummyScenario = {
+  id: string;
+  label: string;
+  description: string;
+  commits: CommitNode[];
+  wip?: WipState;
+};

@@ -1,6 +1,6 @@
-import type { CommitNode } from "../types/git";
+import type { CommitNode, DummyScenario } from "../types/git";
 
-export const dummyCommits: CommitNode[] = [
+const baselineCommits: CommitNode[] = [
   {
     hash: "9f8a1c2",
     message: "Merge branch 'hotfix/hover-hitbox'",
@@ -83,5 +83,139 @@ export const dummyCommits: CommitNode[] = [
     date: "2026-03-24 14:30",
     parents: [],
     refs: [],
+  },
+];
+
+const threeLaneCommits: CommitNode[] = [
+  {
+    hash: "f1a50b2",
+    message: "Merge branch 'hotfix/clipboard-preview'",
+    author: "Yasu",
+    date: "2026-03-25 00:18",
+    parents: ["e8b4d1f", "d3f287a"],
+    refs: [
+      { name: "HEAD", type: "head" },
+      { name: "main", type: "branch" },
+    ],
+  },
+  {
+    hash: "e8b4d1f",
+    message: "Merge branch 'feature/ref-badges'",
+    author: "Yasu",
+    date: "2026-03-24 23:41",
+    parents: ["c4a19e8", "b7ce182"],
+    refs: [],
+  },
+  {
+    hash: "d3f287a",
+    message: "Patch clipboard hover preview clipping",
+    author: "Yasu",
+    date: "2026-03-24 23:26",
+    parents: ["a8d443e"],
+    refs: [{ name: "hotfix/clipboard-preview", type: "branch" }],
+  },
+  {
+    hash: "c4a19e8",
+    message: "Tune row background contrast",
+    author: "Yasu",
+    date: "2026-03-24 23:02",
+    parents: ["92ce651"],
+    refs: [],
+  },
+  {
+    hash: "b7ce182",
+    message: "Finish branch badge polish pass",
+    author: "Yasu",
+    date: "2026-03-24 22:49",
+    parents: ["75d1ce4"],
+    refs: [{ name: "feature/ref-badges", type: "branch" }],
+  },
+  {
+    hash: "a8d443e",
+    message: "Snapshot tooltip width before render",
+    author: "Yasu",
+    date: "2026-03-24 22:35",
+    parents: ["92ce651"],
+    refs: [],
+  },
+  {
+    hash: "92ce651",
+    message: "Merge branch 'feature/minimap-spike'",
+    author: "Yasu",
+    date: "2026-03-24 22:10",
+    parents: ["61cb273", "84a07bf"],
+    refs: [],
+  },
+  {
+    hash: "84a07bf",
+    message: "Sketch minimap viewport sync",
+    author: "Yasu",
+    date: "2026-03-24 21:52",
+    parents: ["5dbe901"],
+    refs: [{ name: "feature/minimap-spike", type: "branch" }],
+  },
+  {
+    hash: "75d1ce4",
+    message: "Stack branch badges with tighter spacing",
+    author: "Yasu",
+    date: "2026-03-24 21:40",
+    parents: ["5dbe901"],
+    refs: [],
+  },
+  {
+    hash: "61cb273",
+    message: "Restructure graph cell hit targets",
+    author: "Yasu",
+    date: "2026-03-24 21:20",
+    parents: ["5dbe901"],
+    refs: [],
+  },
+  {
+    hash: "5dbe901",
+    message: "Scaffold graph prototype shell",
+    author: "Yasu",
+    date: "2026-03-24 20:58",
+    parents: ["2e9d04f"],
+    refs: [{ name: "v0.2.0-alpha", type: "tag" }],
+  },
+  {
+    hash: "2e9d04f",
+    message: "Initial commit",
+    author: "Yasu",
+    date: "2026-03-24 20:11",
+    parents: [],
+    refs: [],
+  },
+];
+
+export const dummyScenarios: DummyScenario[] = [
+  {
+    id: "baseline",
+    label: "Current Baseline",
+    description: "現状の 2 ブランチ前後の流れを確認する標準ケース。",
+    commits: baselineCommits,
+  },
+  {
+    id: "with-wip",
+    label: "With WIP",
+    description: "未コミット変更があり、初期選択が WIP ノードになるケース。",
+    commits: baselineCommits,
+    wip: {
+      unstaged: [
+        { path: "src/components/GraphColumn.tsx", status: "M" },
+        { path: "src/styles/global.css", status: "M" },
+        { path: "docs/PLAN.md", status: "A" },
+      ],
+      staged: [
+        { path: "src/data/dummy-commits.ts", status: "M" },
+        { path: "src/components/RefColumn.tsx", status: "A" },
+      ],
+    },
+  },
+  {
+    id: "three-parallel",
+    label: "Three Parallel Branches",
+    description: "3 レーン以上が同時に立つケースで、配色と接続の見え方を確認する。",
+    commits: threeLaneCommits,
   },
 ];
