@@ -14,7 +14,7 @@ import type {
 
 const FIELD_SEPARATOR = "\x1f";
 const RECORD_SEPARATOR = "\x1e";
-const LOG_FORMAT = `%H%x1f%P%x1f%an%x1f%aI%x1f%s%x1e`;
+const LOG_FORMAT = `%H%x1f%P%x1f%an%x1f%aI%x1f%B%x1e`;
 const REF_FIELD_SEPARATOR = "\t";
 const REF_FORMAT = `%(objectname)\t%(refname)\t%(refname:short)\t%(HEAD)`;
 
@@ -141,10 +141,14 @@ async function loadCommits(git: SimpleGit, refs: BranchRecord[]): Promise<Commit
 
   return output
     .split(RECORD_SEPARATOR)
-    .map((record) => record.trim())
-    .filter((record) => record.length > 0)
+    .filter((record) => record.trim().length > 0)
     .map((record) => {
-      const [hash, parentsField, author, date, message] = record.split(FIELD_SEPARATOR);
+      const [rawHash, rawParentsField, rawAuthor, rawDate, ...messageParts] = record.split(FIELD_SEPARATOR);
+      const hash = rawHash.trim();
+      const parentsField = rawParentsField.trim();
+      const author = rawAuthor.trim();
+      const date = rawDate.trim();
+      const message = messageParts.join(FIELD_SEPARATOR).trimEnd();
 
       return {
         hash,
