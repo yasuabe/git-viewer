@@ -2,7 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { DagView } from "../components/dag-view/DagView";
 import { assignLanes } from "../components/dag-view/layout/assign-lanes";
 import DiffView from "../components/diff-view/DiffView";
-import type { BranchRecord, CommitFileChange, RepositorySnapshot } from "../types/repository";
+import type {
+  BranchRecord,
+  CommitFileChange,
+  RepositoryChangeEvent,
+  RepositorySnapshot,
+} from "../types/repository";
 import type { DiffViewData } from "../types/diff";
 import type { SelectedCommit, WipFile } from "../types/git";
 
@@ -48,6 +53,26 @@ function splitCommitMessage(message: string) {
     subject,
     body: bodyLines.join("\n").trim(),
   };
+}
+
+function formatRepositoryChange(event: RepositoryChangeEvent | null): string {
+  if (!event) {
+    return "watch idle";
+  }
+
+  const label =
+    event.kind === "head"
+      ? "HEAD changed"
+      : event.kind === "index"
+        ? "index changed"
+        : "refs changed";
+  const timeLabel = new Date(event.occurredAt).toLocaleTimeString("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+
+  return `${label} · ${timeLabel}`;
 }
 
 function initialSelection(snapshot: RepositorySnapshot): SelectedCommit | null {
@@ -151,6 +176,7 @@ export default function App() {
   const [overlayDiff, setOverlayDiff] = useState<DiffViewData | null>(null);
   const [overlayDiffError, setOverlayDiffError] = useState<string | null>(null);
   const [isOverlayDiffLoading, setIsOverlayDiffLoading] = useState(false);
+  const [lastRepositoryChange, setLastRepositoryChange] = useState<RepositoryChangeEvent | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -189,6 +215,12 @@ export default function App() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    return window.gitViewer.onRepositoryChanged((event) => {
+      setLastRepositoryChange(event);
+    });
   }, []);
 
   useEffect(() => {
@@ -541,6 +573,7 @@ export default function App() {
       <section className="app-statusbar" aria-label="Status bar">
         <span>{snapshot ? snapshot.repositoryPath : "No repository loaded"}</span>
         <span>{currentBranch ? `branch ${currentBranch.name}` : "branch detached"}</span>
+        <span>{formatRepositoryChange(lastRepositoryChange)}</span>
       </section>
     </main>
   );

@@ -8,12 +8,14 @@ import {
   loadRepositorySnapshot,
   loadWipDiff,
 } from "./git/repository-service";
+import { watchRepositoryChanges } from "./git/repository-watcher";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RENDERER_DIST = path.join(__dirname, "../renderer");
 const PRELOAD_ENTRY = path.join(__dirname, "../preload/index.mjs");
 const DEFAULT_REPOSITORY_PATH = process.env.GIT_VIEWER_REPOSITORY_PATH ?? app.getAppPath();
 const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
+const REPOSITORY_CHANGED_CHANNEL = "repository:changed";
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -99,6 +101,11 @@ function registerIpcHandlers() {
 app.whenReady().then(() => {
   registerIpcHandlers();
   createWindow();
+  void watchRepositoryChanges(DEFAULT_REPOSITORY_PATH, (event) => {
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.webContents.send(REPOSITORY_CHANGED_CHANNEL, event);
+    }
+  });
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
