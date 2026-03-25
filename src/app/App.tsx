@@ -12,6 +12,7 @@ import {
 } from "./format";
 import { hasWipChanges } from "./selection";
 import { useDetailPane } from "./useDetailPane";
+import { useRightPaneSplit } from "./useRightPaneSplit";
 import { useRepositorySync } from "./useRepositorySync";
 
 export default function App() {
@@ -34,6 +35,17 @@ export default function App() {
     overlayDiffError,
     isOverlayDiffLoading,
   } = useDetailPane(selectedCommit, snapshot);
+  const {
+    commitContainerRef,
+    commitMetaRef,
+    wipContainerRef,
+    commitGridTemplateRows,
+    wipGridTemplateRows,
+    isCommitDragging,
+    isWipDragging,
+    startCommitDrag,
+    startWipDrag,
+  } = useRightPaneSplit();
 
   const laneEntries = useMemo(
     () => (snapshot ? assignLanes(snapshot.commits) : []),
@@ -208,7 +220,11 @@ export default function App() {
               <p className="selection-meta">{errorMessage}</p>
             </div>
           ) : selectedCommit?.type === "wip" && snapshot ? (
-            <div className="right-pane-split right-pane-split-wip">
+            <div
+              ref={wipContainerRef}
+              className="right-pane-split right-pane-split-wip"
+              style={{ gridTemplateRows: wipGridTemplateRows }}
+            >
               <FileListSection
                 title="Unstaged"
                 files={snapshot.wip.unstaged}
@@ -216,6 +232,12 @@ export default function App() {
                 onSelectFile={openSelectedFile}
                 kind="unstaged"
                 emptyMessage="未ステージの変更はありません。"
+              />
+              <button
+                className={`right-pane-drag-handle${isWipDragging ? " right-pane-drag-handle-dragging" : ""}`}
+                type="button"
+                aria-label="Resize WIP sections"
+                onPointerDown={startWipDrag}
               />
               <FileListSection
                 title="Staged"
@@ -227,20 +249,30 @@ export default function App() {
               />
             </div>
           ) : selectedNode ? (
-            <div className="right-pane-split right-pane-split-commit">
+            <div
+              ref={commitContainerRef}
+              className="right-pane-split right-pane-split-commit"
+              style={{ gridTemplateRows: commitGridTemplateRows }}
+            >
               <section className="right-pane-message">
                 <div className="right-pane-scroll-area">
                   <p className="commit-subject">{commitMessageParts.subject}</p>
                   {commitMessageParts.body ? <pre className="commit-body">{commitMessageParts.body}</pre> : null}
                 </div>
               </section>
-              <section className="right-pane-meta-strip">
+              <section ref={commitMetaRef} className="right-pane-meta-strip">
                 <p className="right-pane-meta-line">
                   <span>{selectedNode.author}</span>
                   <span>{selectedNode.date}</span>
                 </p>
                 <code className="right-pane-code">{selectedNode.hash}</code>
               </section>
+              <button
+                className={`right-pane-drag-handle${isCommitDragging ? " right-pane-drag-handle-dragging" : ""}`}
+                type="button"
+                aria-label="Resize commit details sections"
+                onPointerDown={startCommitDrag}
+              />
               <FileListSection
                 title="Changed files"
                 files={commitFiles}

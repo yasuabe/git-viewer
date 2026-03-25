@@ -301,6 +301,39 @@ code {
   padding-block: 10px;
 }
 
+.right-pane-drag-handle {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(8, 17, 31, 0.96);
+  cursor: row-resize;
+  touch-action: none;
+}
+
+.right-pane-drag-handle::before {
+  content: "";
+  width: 44px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.3);
+}
+
+.right-pane-drag-handle:hover::before,
+.right-pane-drag-handle-dragging::before {
+  background: rgba(125, 211, 252, 0.52);
+}
+
+.right-pane-drag-handle:focus-visible {
+  outline: 1px solid rgba(125, 211, 252, 0.5);
+  outline-offset: -1px;
+}
+
 .right-pane-meta-line {
   display: flex;
   flex-wrap: wrap;
