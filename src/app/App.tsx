@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DagView } from "../components/dag-view/DagView";
 import { assignLanes } from "../components/dag-view/layout/assign-lanes";
 import DiffView from "../components/diff-view/DiffView";
@@ -10,6 +10,8 @@ import type {
 } from "../types/repository";
 import type { DiffViewData } from "../types/diff";
 import type { SelectedCommit, WipFile } from "../types/git";
+
+const REPOSITORY_RELOAD_DEBOUNCE_MS = 300;
 
 type SelectedFile =
   | {
@@ -78,7 +80,7 @@ function formatRepositoryChange(event: RepositoryChangeEvent | null): string {
 }
 
 function initialSelection(snapshot: RepositorySnapshot): SelectedCommit | null {
-  if (snapshot.wip && (snapshot.wip.staged.length > 0 || snapshot.wip.unstaged.length > 0)) {
+  if (hasWipChanges(snapshot)) {
     return { type: "wip" };
   }
 
@@ -87,6 +89,49 @@ function initialSelection(snapshot: RepositorySnapshot): SelectedCommit | null {
   }
 
   return null;
+}
+
+function hasWipChanges(snapshot: RepositorySnapshot): boolean {
+  return snapshot.wip.staged.length > 0 || snapshot.wip.unstaged.length > 0;
+}
+
+function resolveSelectedCommit(
+  previousSelectedCommit: SelectedCommit | null,
+  snapshot: RepositorySnapshot,
+): SelectedCommit | null {
+  if (!previousSelectedCommit) {
+    return initialSelection(snapshot);
+  }
+
+  if (previousSelectedCommit.type === "commit") {
+    return snapshot.commits.some((commit) => commit.hash === previousSelectedCommit.hash)
+      ? previousSelectedCommit
+      : initialSelection(snapshot);
+  }
+
+  return hasWipChanges(snapshot) ? previousSelectedCommit : initialSelection(snapshot);
+}
+
+function resolveSelectedFile(
+  previousSelectedFile: SelectedFile | null,
+  nextSelectedCommit: SelectedCommit | null,
+  snapshot: RepositorySnapshot,
+): SelectedFile | null {
+  if (!previousSelectedFile) {
+    return null;
+  }
+
+  if (previousSelectedFile.kind === "commit") {
+    return nextSelectedCommit?.type === "commit" && nextSelectedCommit.hash === previousSelectedFile.commitHash
+      ? previousSelectedFile
+      : null;
+  }
+
+  const files = previousSelectedFile.kind === "staged" ? snapshot.wip.staged : snapshot.wip.unstaged;
+
+  return files.some((file) => file.path === previousSelectedFile.path)
+    ? { ...previousSelectedFile }
+    : null;
 }
 
 type FileListSectionProps = {
@@ -182,6 +227,17 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [repositoryReloadVersion, setRepositoryReloadVersion] = useState(0);
+  const selectedCommitRef = useRef<SelectedCommit | null>(null);
+  const selectedFileRef = useRef<SelectedFile | null>(null);
+  const reloadDebounceTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    selectedCommitRef.current = selectedCommit;
+  }, [selectedCommit]);
+
+  useEffect(() => {
+    selectedFileRef.current = selectedFile;
+  }, [selectedFile]);
 
   useEffect(() => {
     let cancelled = false;
@@ -197,8 +253,12 @@ export default function App() {
           return;
         }
 
+        const nextSelectedCommit = resolveSelectedCommit(selectedCommitRef.current, nextSnapshot);
+        const nextSelectedFile = resolveSelectedFile(selectedFileRef.current, nextSelectedCommit, nextSnapshot);
+
         setSnapshot(nextSnapshot);
-        setSelectedCommit(initialSelection(nextSnapshot));
+        setSelectedCommit(nextSelectedCommit);
+        setSelectedFile(nextSelectedFile);
       } catch (error) {
         if (cancelled) {
           return;
@@ -223,8 +283,24 @@ export default function App() {
   useEffect(() => {
     return window.gitViewer.onRepositoryChanged((event) => {
       setLastRepositoryChange(event);
-      setRepositoryReloadVersion((version) => version + 1);
+
+      if (reloadDebounceTimerRef.current !== null) {
+        window.clearTimeout(reloadDebounceTimerRef.current);
+      }
+
+      reloadDebounceTimerRef.current = window.setTimeout(() => {
+        setRepositoryReloadVersion((version) => version + 1);
+        reloadDebounceTimerRef.current = null;
+      }, REPOSITORY_RELOAD_DEBOUNCE_MS);
     });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (reloadDebounceTimerRef.current !== null) {
+        window.clearTimeout(reloadDebounceTimerRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -370,7 +446,7 @@ export default function App() {
     selectedCommit?.type === "commit"
       ? snapshot?.commits.find((commit) => commit.hash === selectedCommit.hash) ?? null
       : null;
-  const hasWip = Boolean(snapshot?.wip && (snapshot.wip.staged.length > 0 || snapshot.wip.unstaged.length > 0));
+  const hasWip = snapshot ? hasWipChanges(snapshot) : false;
   const commitMessageParts = splitCommitMessage(selectedNode?.message ?? "");
 
   return (
