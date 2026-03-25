@@ -145,7 +145,15 @@ code {
 .app-main {
   min-height: 0;
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.app-workspace {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
 }
 
 .app-pane {
@@ -232,6 +240,74 @@ code {
   font-size: 11px;
 }
 
+.right-pane-split {
+  display: grid;
+  height: calc(100vh - 136px);
+  min-height: 0;
+}
+
+.right-pane-split-commit {
+  grid-template-rows: minmax(180px, 1.3fr) auto minmax(180px, 1fr);
+}
+
+.right-pane-split-wip {
+  grid-template-rows: minmax(180px, 1fr) minmax(180px, 1fr);
+}
+
+.right-pane-split-section,
+.right-pane-message {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.right-pane-message {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.right-pane-split-section + .right-pane-split-section,
+.right-pane-meta-strip {
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.right-pane-split-header,
+.right-pane-meta-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 34px;
+  padding: 0 14px;
+}
+
+.right-pane-meta-strip {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 58px;
+  padding-block: 10px;
+}
+
+.right-pane-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.right-pane-scroll-area {
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 14px 14px;
+}
+
+.right-pane-count {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
 .right-pane-body {
   display: grid;
   align-content: start;
@@ -255,6 +331,102 @@ code {
 .right-pane-code {
   color: #cbd5e1;
   word-break: break-all;
+}
+
+.right-pane-file-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.right-pane-file-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.right-pane-file-button:hover {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.right-pane-file-button-active {
+  border-color: rgba(125, 211, 252, 0.28);
+  background: rgba(125, 211, 252, 0.1);
+}
+
+.right-pane-file-button code {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #cbd5e1;
+}
+
+.commit-subject {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.commit-body {
+  margin: 14px 0 0;
+  color: #cbd5e1;
+  font-family: "IBM Plex Sans", "Noto Sans JP", sans-serif;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.right-pane-placeholder {
+  display: grid;
+  align-content: start;
+}
+
+.diff-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: rgba(11, 17, 30, 0.96);
+  border-right: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.diff-overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 54px;
+  padding: 0 18px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(19, 25, 40, 0.92);
+}
+
+.diff-overlay-title {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.diff-overlay-meta {
+  margin: 4px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
 }
 
 .app-summary-grid {
@@ -701,19 +873,27 @@ h1 {
   }
 
   .app-main {
-    grid-template-columns: 200px minmax(0, 1fr);
+    grid-template-columns: 1fr;
+  }
+
+  .app-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .app-pane-left {
+    display: none;
   }
 
   .app-pane-right {
-    grid-column: 1 / -1;
     border-top: 1px solid rgba(148, 163, 184, 0.12);
   }
 
   .right-pane-body,
   .branch-tree,
-  .pane-body-center {
+  .pane-body-center,
+  .right-pane-split {
     height: auto;
-    max-height: 40vh;
+    max-height: 42vh;
   }
 
   .placeholder-shell {
