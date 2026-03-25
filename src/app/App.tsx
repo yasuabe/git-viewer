@@ -2,15 +2,22 @@ import { useEffect, useMemo, useState } from "react";
 import { DagView } from "../components/dag-view/DagView";
 import { assignLanes } from "../components/dag-view/layout/assign-lanes";
 import DiffView from "../components/diff-view/DiffView";
-import type { BranchRecord, RepositorySnapshot } from "../types/repository";
+import type { BranchRecord, CommitFileChange, RepositorySnapshot } from "../types/repository";
 import type { DiffViewData } from "../types/diff";
 import type { SelectedCommit, WipFile } from "../types/git";
 
-type SelectedFile = {
-  kind: "commit" | "staged" | "unstaged";
-  path: string;
-  status?: WipFile["status"];
-};
+type SelectedFile =
+  | {
+      kind: "commit";
+      commitHash: string;
+      path: string;
+      status: CommitFileChange["status"];
+    }
+  | {
+      kind: "staged" | "unstaged";
+      path: string;
+      status: WipFile["status"];
+    };
 
 function statusClassName(status: WipFile["status"]): string {
   return `wip-status wip-status-${status.toLowerCase()}`;
@@ -55,8 +62,8 @@ function initialSelection(snapshot: RepositorySnapshot): SelectedCommit | null {
   return null;
 }
 
-function createPlaceholderDiff(selectedFile: SelectedFile): DiffViewData {
-  const status = selectedFile.status ?? "M";
+function createPlaceholderDiff(selectedFile: Exclude<SelectedFile, { kind: "commit" }>): DiffViewData {
+  const status = selectedFile.status;
   const path = selectedFile.path;
 
   if (status === "A") {
@@ -108,39 +115,79 @@ index 1111111..2222222 100644
 
 type FileListSectionProps = {
   title: string;
-  files: WipFile[];
+  files: Array<{ path: string; status: WipFile["status"] }>;
   selectedFile: SelectedFile | null;
   onSelectFile: (selectedFile: SelectedFile) => void;
-  kind: "staged" | "unstaged";
+  kind: SelectedFile["kind"];
+  commitHash?: string;
+  isLoading?: boolean;
+  emptyMessage: string;
 };
 
-function FileListSection({ title, files, selectedFile, onSelectFile, kind }: FileListSectionProps) {
+function FileListSection({
+  title,
+  files,
+  selectedFile,
+  onSelectFile,
+  kind,
+  commitHash,
+  isLoading = false,
+  emptyMessage,
+}: FileListSectionProps) {
   return (
     <section className="right-pane-split-section">
       <div className="right-pane-split-header">
         <p className="right-pane-label">{title}</p>
-        <span className="right-pane-count">{files.length}</span>
+        <span className="right-pane-count">{isLoading ? "..." : files.length}</span>
       </div>
-      <div className="right-pane-scroll-area">
-        <ul className="right-pane-file-list">
-          {files.map((file) => {
-            const isActive = selectedFile?.path === file.path && selectedFile.kind === kind;
+      {isLoading ? (
+        <div className="right-pane-scroll-area right-pane-placeholder">
+          <p className="selection-meta">ファイル一覧を取得しています。</p>
+        </div>
+      ) : files.length > 0 ? (
+        <div className="right-pane-scroll-area">
+          <ul className="right-pane-file-list">
+            {files.map((file) => {
+              const isActive =
+                selectedFile?.path === file.path &&
+                selectedFile.kind === kind &&
+                (selectedFile.kind !== "commit" || selectedFile.commitHash === commitHash);
 
-            return (
-              <li key={`${kind}-${file.path}`}>
-                <button
-                  className={`right-pane-file-button${isActive ? " right-pane-file-button-active" : ""}`}
-                  type="button"
-                  onClick={() => onSelectFile({ kind, path: file.path, status: file.status })}
-                >
-                  <span className={statusClassName(file.status)}>{file.status}</span>
-                  <code>{file.path}</code>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+              return (
+                <li key={`${kind}-${file.path}`}>
+                  <button
+                    className={`right-pane-file-button${isActive ? " right-pane-file-button-active" : ""}`}
+                    type="button"
+                    onClick={() =>
+                      onSelectFile(
+                        kind === "commit"
+                          ? {
+                              kind,
+                              commitHash: commitHash ?? "",
+                              path: file.path,
+                              status: file.status,
+                            }
+                          : {
+                              kind,
+                              path: file.path,
+                              status: file.status,
+                            },
+                      )
+                    }
+                  >
+                    <span className={statusClassName(file.status)}>{file.status}</span>
+                    <code>{file.path}</code>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : (
+        <div className="right-pane-scroll-area right-pane-placeholder">
+          <p className="selection-meta">{emptyMessage}</p>
+        </div>
+      )}
     </section>
   );
 }
@@ -149,6 +196,12 @@ export default function App() {
   const [snapshot, setSnapshot] = useState<RepositorySnapshot | null>(null);
   const [selectedCommit, setSelectedCommit] = useState<SelectedCommit | null>(null);
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
+  const [commitFiles, setCommitFiles] = useState<CommitFileChange[]>([]);
+  const [commitFilesError, setCommitFilesError] = useState<string | null>(null);
+  const [isCommitFilesLoading, setIsCommitFilesLoading] = useState(false);
+  const [overlayDiff, setOverlayDiff] = useState<DiffViewData | null>(null);
+  const [overlayDiffError, setOverlayDiffError] = useState<string | null>(null);
+  const [isOverlayDiffLoading, setIsOverlayDiffLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -191,6 +244,55 @@ export default function App() {
 
   useEffect(() => {
     setSelectedFile(null);
+    setOverlayDiff(null);
+    setOverlayDiffError(null);
+    setIsOverlayDiffLoading(false);
+  }, [selectedCommit]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (selectedCommit?.type !== "commit") {
+      setCommitFiles([]);
+      setCommitFilesError(null);
+      setIsCommitFilesLoading(false);
+      return;
+    }
+
+    const commitHash = selectedCommit.hash;
+
+    setCommitFiles([]);
+    setCommitFilesError(null);
+    setIsCommitFilesLoading(true);
+
+    async function loadFiles() {
+      try {
+        const nextFiles = await window.gitViewer.loadCommitFiles(commitHash);
+
+        if (cancelled) {
+          return;
+        }
+
+        setCommitFiles(nextFiles);
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        const message = error instanceof Error ? error.message : "Changed file list load failed.";
+        setCommitFilesError(message);
+      } finally {
+        if (!cancelled) {
+          setIsCommitFilesLoading(false);
+        }
+      }
+    }
+
+    void loadFiles();
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedCommit]);
 
   useEffect(() => {
@@ -208,6 +310,59 @@ export default function App() {
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedFile]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!selectedFile) {
+      setOverlayDiff(null);
+      setOverlayDiffError(null);
+      setIsOverlayDiffLoading(false);
+      return;
+    }
+
+    setOverlayDiff(null);
+    setOverlayDiffError(null);
+
+    if (selectedFile.kind !== "commit") {
+      setOverlayDiff(createPlaceholderDiff(selectedFile));
+      setIsOverlayDiffLoading(false);
+      return;
+    }
+
+    const { commitHash, path } = selectedFile;
+
+    setIsOverlayDiffLoading(true);
+
+    async function loadDiff() {
+      try {
+        const nextDiff = await window.gitViewer.loadCommitDiff(commitHash, path);
+
+        if (cancelled) {
+          return;
+        }
+
+        setOverlayDiff(nextDiff);
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        const message = error instanceof Error ? error.message : "Diff load failed.";
+        setOverlayDiffError(message);
+      } finally {
+        if (!cancelled) {
+          setIsOverlayDiffLoading(false);
+        }
+      }
+    }
+
+    void loadDiff();
+
+    return () => {
+      cancelled = true;
     };
   }, [selectedFile]);
 
@@ -231,7 +386,6 @@ export default function App() {
       : null;
   const hasWip = Boolean(snapshot?.wip && (snapshot.wip.staged.length > 0 || snapshot.wip.unstaged.length > 0));
   const commitMessageParts = splitCommitMessage(selectedNode?.message ?? "");
-  const overlayDiff = selectedFile ? createPlaceholderDiff(selectedFile) : null;
 
   return (
     <main className="desktop-shell">
@@ -333,20 +487,34 @@ export default function App() {
             </div>
           </section>
 
-          {selectedFile && overlayDiff ? (
+          {selectedFile ? (
             <section className="diff-overlay" aria-label="Diff overlay">
               <div className="diff-overlay-header">
                 <div>
                   <p className="diff-overlay-title">{selectedFile.path}</p>
                   <p className="diff-overlay-meta">
-                    placeholder diff · left + center overlay · Esc to close
+                    {selectedFile.kind === "commit"
+                      ? "commit diff · left + center overlay · Esc to close"
+                      : "WIP diff placeholder · left + center overlay · Esc to close"}
                   </p>
                 </div>
                 <button className="selection-action" type="button" onClick={() => setSelectedFile(null)}>
                   Close
                 </button>
               </div>
-              <DiffView diff={overlayDiff} />
+              {isOverlayDiffLoading ? (
+                <div className="app-empty-state">
+                  <p className="selection-title">Loading diff</p>
+                  <p className="selection-meta">選択ファイルの差分を取得しています。</p>
+                </div>
+              ) : overlayDiffError ? (
+                <div className="app-empty-state">
+                  <p className="selection-title">Cannot show diff</p>
+                  <p className="selection-meta">{overlayDiffError}</p>
+                </div>
+              ) : overlayDiff ? (
+                <DiffView diff={overlayDiff} />
+              ) : null}
             </section>
           ) : null}
         </div>
@@ -374,6 +542,7 @@ export default function App() {
                 selectedFile={selectedFile}
                 onSelectFile={setSelectedFile}
                 kind="unstaged"
+                emptyMessage="未ステージの変更はありません。"
               />
               <FileListSection
                 title="Staged"
@@ -381,6 +550,7 @@ export default function App() {
                 selectedFile={selectedFile}
                 onSelectFile={setSelectedFile}
                 kind="staged"
+                emptyMessage="ステージ済みの変更はありません。"
               />
             </div>
           ) : selectedNode ? (
@@ -398,17 +568,16 @@ export default function App() {
                 </p>
                 <code className="right-pane-code">{selectedNode.hash}</code>
               </section>
-              <section className="right-pane-split-section">
-                <div className="right-pane-split-header">
-                  <p className="right-pane-label">Changed files</p>
-                  <span className="right-pane-count">pending</span>
-                </div>
-                <div className="right-pane-scroll-area right-pane-placeholder">
-                  <p className="selection-meta">
-                    コミットごとの変更ファイル一覧は、main process からの取得を次の段階で接続する。
-                  </p>
-                </div>
-              </section>
+              <FileListSection
+                title="Changed files"
+                files={commitFiles}
+                selectedFile={selectedFile}
+                onSelectFile={setSelectedFile}
+                kind="commit"
+                commitHash={selectedNode.hash}
+                isLoading={isCommitFilesLoading}
+                emptyMessage={commitFilesError ?? "このコミットには表示対象の変更ファイルがありません。"}
+              />
             </div>
           ) : (
             <div className="pane-body right-pane-body">

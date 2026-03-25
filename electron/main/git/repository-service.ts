@@ -1,7 +1,14 @@
 import path from "node:path";
 import simpleGit, { type SimpleGit } from "simple-git";
+import type { DiffViewData } from "../../../src/types/diff";
 import type { CommitNode, Ref, WipFile, WipState } from "../../../src/types/git";
-import type { BranchData, BranchKind, BranchRecord, RepositorySnapshot } from "../../../src/types/repository";
+import type {
+  BranchData,
+  BranchKind,
+  BranchRecord,
+  CommitFileChange,
+  RepositorySnapshot,
+} from "../../../src/types/repository";
 
 const FIELD_SEPARATOR = "\x1f";
 const RECORD_SEPARATOR = "\x1e";
@@ -17,13 +24,7 @@ export class RepositoryLoadError extends Error {
 }
 
 export async function loadRepositorySnapshot(repositoryPath: string): Promise<RepositorySnapshot> {
-  const normalizedPath = path.resolve(repositoryPath);
-  const git = simpleGit(normalizedPath);
-  const isRepo = await git.checkIsRepo();
-
-  if (!isRepo) {
-    throw new RepositoryLoadError(`${normalizedPath} is not a Git repository.`);
-  }
+  const { git, normalizedPath } = await openRepository(repositoryPath);
 
   const [branchData, wip, hasHeadCommit] = await Promise.all([
     loadBranchData(git),
@@ -37,6 +38,60 @@ export async function loadRepositorySnapshot(repositoryPath: string): Promise<Re
     branchData,
     commits,
     wip,
+  };
+}
+
+export async function loadCommitFiles(repositoryPath: string, commitHash: string): Promise<CommitFileChange[]> {
+  const { git } = await openRepository(repositoryPath);
+  const output = await git.raw([
+    "diff-tree",
+    "--no-commit-id",
+    "--name-status",
+    "-r",
+    "--root",
+    "--find-renames",
+    commitHash,
+  ]);
+
+  return output
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map(parseNameStatusLine)
+    .filter((entry): entry is CommitFileChange => entry !== null);
+}
+
+export async function loadCommitDiff(
+  repositoryPath: string,
+  commitHash: string,
+  filePath: string,
+): Promise<DiffViewData> {
+  const { git } = await openRepository(repositoryPath);
+  const raw = await git.raw([
+    "show",
+    "--format=",
+    "--find-renames",
+    "--no-ext-diff",
+    commitHash,
+    "--",
+    filePath,
+  ]);
+
+  return { raw };
+}
+
+async function openRepository(repositoryPath: string): Promise<{ git: SimpleGit; normalizedPath: string }> {
+  const normalizedPath = path.resolve(repositoryPath);
+  const git = simpleGit(normalizedPath);
+  const isRepo = await git.checkIsRepo();
+
+  if (!isRepo) {
+    throw new RepositoryLoadError(`${normalizedPath} is not a Git repository.`);
+  }
+
+  return {
+    git,
+    normalizedPath,
   };
 }
 
@@ -190,4 +245,18 @@ function normalizeStatusCode(code: string): WipFile["status"] {
     default:
       return "M";
   }
+}
+
+function parseNameStatusLine(line: string): CommitFileChange | null {
+  const [rawStatus, ...paths] = line.split(REF_FIELD_SEPARATOR);
+  const nextPath = paths.at(-1)?.trim();
+
+  if (!rawStatus || !nextPath) {
+    return null;
+  }
+
+  return {
+    path: nextPath,
+    status: normalizeStatusCode(rawStatus[0]),
+  };
 }

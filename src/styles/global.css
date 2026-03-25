@@ -401,6 +401,9 @@ code {
   z-index: 10;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   background: rgba(11, 17, 30, 0.96);
   border-right: 1px solid rgba(148, 163, 184, 0.12);
 }
@@ -836,21 +839,30 @@ h1 {
 }
 
 .diff-view-shell {
-  min-height: 720px;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
   padding: 20px 24px 28px;
+  overflow: auto;
   background:
     linear-gradient(180deg, rgba(12, 18, 33, 0.92), rgba(8, 15, 28, 0.98));
 }
 
 .diff-view-root {
+  width: max-content;
+  min-width: 100%;
   color: #dbe4f0;
 }
 
 .diff-view-root .d2h-wrapper {
+  width: max-content;
+  min-width: 100%;
   background: transparent;
 }
 
 .diff-view-root .d2h-file-wrapper {
+  width: max-content;
+  min-width: 100%;
   margin-bottom: 18px;
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 18px;
@@ -859,6 +871,8 @@ h1 {
 }
 
 .diff-view-root .d2h-diff-table {
+  width: max-content;
+  min-width: 100%;
   font-size: 13px;
 }
 

@@ -1,4 +1,5 @@
-import type { CommitNode, WipState } from "./git";
+import type { DiffViewData } from "./diff";
+import type { CommitNode, WipFile, WipState } from "./git";
 
 export type BranchKind = "local" | "remote" | "tag";
 
@@ -21,6 +22,15 @@ export type RepositorySnapshot = {
   wip: WipState;
 };
 
+export type FileChangeStatus = WipFile["status"];
+
+export type CommitFileChange = {
+  path: string;
+  status: FileChangeStatus;
+};
+
 export type GitViewerApi = {
   loadDefaultRepository: () => Promise<RepositorySnapshot>;
+  loadCommitFiles: (commitHash: string) => Promise<CommitFileChange[]>;
+  loadCommitDiff: (commitHash: string, path: string) => Promise<DiffViewData>;
 };

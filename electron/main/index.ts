@@ -1,7 +1,12 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, ipcMain } from "electron";
-import { RepositoryLoadError, loadRepositorySnapshot } from "./git/repository-service";
+import {
+  RepositoryLoadError,
+  loadCommitDiff,
+  loadCommitFiles,
+  loadRepositorySnapshot,
+} from "./git/repository-service";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RENDERER_DIST = path.join(__dirname, "../renderer");
@@ -43,6 +48,32 @@ function registerIpcHandlers() {
       }
 
       const message = error instanceof Error ? error.message : "Unexpected repository load failure.";
+      throw new Error(message);
+    }
+  });
+
+  ipcMain.handle("repository:load-commit-files", async (_event, commitHash: string) => {
+    try {
+      return await loadCommitFiles(DEFAULT_REPOSITORY_PATH, commitHash);
+    } catch (error) {
+      if (error instanceof RepositoryLoadError) {
+        throw error;
+      }
+
+      const message = error instanceof Error ? error.message : "Unexpected commit file load failure.";
+      throw new Error(message);
+    }
+  });
+
+  ipcMain.handle("repository:load-commit-diff", async (_event, commitHash: string, filePath: string) => {
+    try {
+      return await loadCommitDiff(DEFAULT_REPOSITORY_PATH, commitHash, filePath);
+    } catch (error) {
+      if (error instanceof RepositoryLoadError) {
+        throw error;
+      }
+
+      const message = error instanceof Error ? error.message : "Unexpected commit diff load failure.";
       throw new Error(message);
     }
   });
