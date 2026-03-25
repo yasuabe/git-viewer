@@ -4,6 +4,8 @@ import simpleGit from "simple-git";
 import type { RepositoryChangeEvent, RepositoryChangeKind } from "../../../src/types/repository";
 
 type StopWatching = () => void;
+const STATUS_POLL_INTERVAL_MS = 1500;
+const STATUS_COMMAND = ["status", "--porcelain=v1", "--untracked-files=all"] as const;
 
 type RepositoryRootTarget = {
   directory: string;
@@ -43,8 +45,11 @@ export async function watchRepositoryChanges(
     ...refsTargets.map((target) => createRefsWatcher(target, onChange)),
   ]
     .filter((watcher): watcher is FSWatcher => watcher !== null);
+  const stopPollingStatus = startStatusPolling(normalizedRepositoryPath, git, onChange);
 
   return () => {
+    stopPollingStatus();
+
     for (const watcher of watchers) {
       watcher.close();
     }
@@ -105,4 +110,53 @@ function normalizeFilename(filename: string | Buffer | null): string {
   }
 
   return typeof filename === "string" ? filename : filename.toString("utf8");
+}
+
+function startStatusPolling(
+  repositoryPath: string,
+  git: ReturnType<typeof simpleGit>,
+  onChange: (event: RepositoryChangeEvent) => void,
+): StopWatching {
+  let previousStatusOutput: string | null = null;
+  let isPolling = false;
+
+  async function pollStatus() {
+    if (isPolling) {
+      return;
+    }
+
+    isPolling = true;
+
+    try {
+      const nextStatusOutput = await git.raw([...STATUS_COMMAND]);
+
+      if (previousStatusOutput === null) {
+        previousStatusOutput = nextStatusOutput;
+        return;
+      }
+
+      if (nextStatusOutput !== previousStatusOutput) {
+        previousStatusOutput = nextStatusOutput;
+        onChange({
+          kind: "worktree",
+          path: repositoryPath,
+          occurredAt: new Date().toISOString(),
+        });
+      }
+    } catch {
+      return;
+    } finally {
+      isPolling = false;
+    }
+  }
+
+  void pollStatus();
+
+  const intervalId = setInterval(() => {
+    void pollStatus();
+  }, STATUS_POLL_INTERVAL_MS);
+
+  return () => {
+    clearInterval(intervalId);
+  };
 }

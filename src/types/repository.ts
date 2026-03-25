@@ -30,7 +30,7 @@ export type CommitFileChange = {
   status: FileChangeStatus;
 };
 
-export type RepositoryChangeKind = "head" | "index" | "refs";
+export type RepositoryChangeKind = "head" | "index" | "refs" | "worktree";
 
 export type RepositoryChangeEvent = {
   kind: RepositoryChangeKind;

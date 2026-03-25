@@ -65,7 +65,9 @@ function formatRepositoryChange(event: RepositoryChangeEvent | null): string {
       ? "HEAD changed"
       : event.kind === "index"
         ? "index changed"
-        : "refs changed";
+        : event.kind === "worktree"
+          ? "worktree changed"
+          : "refs changed";
   const timeLabel = new Date(event.occurredAt).toLocaleTimeString("ja-JP", {
     hour: "2-digit",
     minute: "2-digit",
@@ -179,6 +181,7 @@ export default function App() {
   const [lastRepositoryChange, setLastRepositoryChange] = useState<RepositoryChangeEvent | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [repositoryReloadVersion, setRepositoryReloadVersion] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -215,11 +218,12 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [repositoryReloadVersion]);
 
   useEffect(() => {
     return window.gitViewer.onRepositoryChanged((event) => {
       setLastRepositoryChange(event);
+      setRepositoryReloadVersion((version) => version + 1);
     });
   }, []);
 
