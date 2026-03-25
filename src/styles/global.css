@@ -15,6 +15,7 @@
 html,
 body,
 #root {
+  height: 100%;
   min-height: 100%;
   margin: 0;
 }
@@ -42,9 +43,11 @@ code {
 }
 
 .desktop-shell {
+  height: 100vh;
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
   color: #e5e7eb;
 }
 
@@ -143,20 +146,26 @@ code {
 }
 
 .app-main {
+  height: 100%;
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
+  overflow: hidden;
 }
 
 .app-workspace {
   position: relative;
+  height: 100%;
   min-width: 0;
   min-height: 0;
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
+  overflow: hidden;
 }
 
 .app-pane {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
   border-right: 1px solid rgba(148, 163, 184, 0.12);
@@ -183,16 +192,20 @@ code {
 }
 
 .pane-body {
+  height: 100%;
   min-height: 0;
 }
 
 .pane-body-center {
-  height: calc(100vh - 136px);
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .right-pane-body,
 .branch-tree {
-  height: calc(100vh - 136px);
+  min-height: 0;
+  height: 100%;
   overflow: auto;
 }
 
@@ -242,7 +255,7 @@ code {
 
 .right-pane-split {
   display: grid;
-  height: calc(100vh - 136px);
+  height: 100%;
   min-height: 0;
 }
 
@@ -677,7 +690,10 @@ h1 {
 }
 
 .dag-view {
+  min-width: 0;
   min-height: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 .dag-scroll {
@@ -686,6 +702,7 @@ h1 {
   overflow: auto;
   max-height: none;
   height: 100%;
+  min-height: 0;
 }
 
 .ref-column {
