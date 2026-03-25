@@ -5,12 +5,10 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "types": ["node"],
     "noEmit": true
   },
-  "include": [
-    "vite.config.ts",
-    "vite.workbench-dag.config.ts",
-    "vite.workbench-diff.config.ts",
-    "electron.vite.config.ts"
-  ]
+  "include": ["electron/**/*.ts", "src/types/**/*.ts"]
 }
