@@ -38,7 +38,9 @@ export function formatRepositoryChange(event: RepositoryChangeEvent | null): str
   }
 
   const label =
-    event.kind === "head"
+    event.kind === "repository"
+      ? "repository changed"
+      : event.kind === "head"
       ? "HEAD changed"
       : event.kind === "index"
         ? "index changed"

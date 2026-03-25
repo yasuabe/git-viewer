@@ -36,7 +36,7 @@ export function useRepositorySync(): UseRepositorySyncResult {
       setErrorMessage(null);
 
       try {
-        const nextSnapshot = await window.gitViewer.loadDefaultRepository();
+        const nextSnapshot = await window.gitViewer.loadCurrentRepository();
 
         if (cancelled) {
           return;

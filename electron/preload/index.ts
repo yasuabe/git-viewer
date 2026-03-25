@@ -4,8 +4,8 @@ import type { GitViewerApi } from "../../src/types/repository";
 const REPOSITORY_CHANGED_CHANNEL = "repository:changed";
 
 const gitViewerApi: GitViewerApi = {
-  loadDefaultRepository() {
-    return ipcRenderer.invoke("repository:load-default");
+  loadCurrentRepository() {
+    return ipcRenderer.invoke("repository:load-current");
   },
   loadCommitFiles(commitHash) {
     return ipcRenderer.invoke("repository:load-commit-files", commitHash);

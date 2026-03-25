@@ -1,6 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, Menu, dialog, ipcMain, type MessageBoxOptions, type OpenDialogOptions } from "electron";
 import {
   RepositoryLoadError,
   loadCommitDiff,
@@ -16,6 +16,8 @@ const PRELOAD_ENTRY = path.join(__dirname, "../preload/index.mjs");
 const DEFAULT_REPOSITORY_PATH = process.env.GIT_VIEWER_REPOSITORY_PATH ?? app.getAppPath();
 const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
 const REPOSITORY_CHANGED_CHANNEL = "repository:changed";
+let currentRepositoryPath = DEFAULT_REPOSITORY_PATH;
+let stopWatchingRepository: (() => void) | null = null;
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -41,10 +43,99 @@ function createWindow(): BrowserWindow {
   return window;
 }
 
+function broadcastRepositoryChanged(event: {
+  kind: "head" | "index" | "refs" | "worktree" | "repository";
+  path: string;
+  occurredAt: string;
+}) {
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.webContents.send(REPOSITORY_CHANGED_CHANNEL, event);
+  }
+}
+
+async function restartRepositoryWatcher() {
+  stopWatchingRepository?.();
+  stopWatchingRepository = await watchRepositoryChanges(currentRepositoryPath, (event) => {
+    broadcastRepositoryChanged(event);
+  });
+}
+
+async function openRepositoryFromDialog(parentWindow: BrowserWindow | null) {
+  const dialogOptions: OpenDialogOptions = {
+    title: "Open Repository",
+    properties: ["openDirectory"],
+  };
+  const result = parentWindow
+    ? await dialog.showOpenDialog(parentWindow, dialogOptions)
+    : await dialog.showOpenDialog(dialogOptions);
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return;
+  }
+
+  const [nextRepositoryPath] = result.filePaths;
+
+  try {
+    await loadRepositorySnapshot(nextRepositoryPath);
+    currentRepositoryPath = nextRepositoryPath;
+    await restartRepositoryWatcher();
+    broadcastRepositoryChanged({
+      kind: "repository",
+      path: path.resolve(nextRepositoryPath),
+      occurredAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unexpected repository open failure.";
+    const messageBoxOptions: MessageBoxOptions = {
+      type: "error",
+      title: "Cannot Open Repository",
+      message: "The selected directory could not be opened as a Git repository.",
+      detail: message,
+    };
+
+    if (parentWindow) {
+      await dialog.showMessageBox(parentWindow, messageBoxOptions);
+    } else {
+      await dialog.showMessageBox(messageBoxOptions);
+    }
+  }
+}
+
+function createApplicationMenu() {
+  return Menu.buildFromTemplate([
+    {
+      label: "File",
+      submenu: [
+        {
+          label: "Open Repository...",
+          accelerator: "CmdOrCtrl+O",
+          click: () => {
+            void openRepositoryFromDialog(BrowserWindow.getFocusedWindow());
+          },
+        },
+        {
+          type: "separator",
+        },
+        {
+          role: "quit",
+        },
+      ],
+    },
+    {
+      label: "View",
+      submenu: [{ role: "reload" }, { role: "forceReload" }, { role: "toggleDevTools" }],
+    },
+    {
+      label: "Window",
+      submenu: [{ role: "minimize" }, { role: "close" }],
+    },
+  ]);
+}
+
 function registerIpcHandlers() {
-  ipcMain.handle("repository:load-default", async () => {
+  ipcMain.handle("repository:load-current", async () => {
     try {
-      return await loadRepositorySnapshot(DEFAULT_REPOSITORY_PATH);
+      return await loadRepositorySnapshot(currentRepositoryPath);
     } catch (error) {
       if (error instanceof RepositoryLoadError) {
         throw error;
@@ -57,7 +148,7 @@ function registerIpcHandlers() {
 
   ipcMain.handle("repository:load-commit-files", async (_event, commitHash: string) => {
     try {
-      return await loadCommitFiles(DEFAULT_REPOSITORY_PATH, commitHash);
+      return await loadCommitFiles(currentRepositoryPath, commitHash);
     } catch (error) {
       if (error instanceof RepositoryLoadError) {
         throw error;
@@ -70,7 +161,7 @@ function registerIpcHandlers() {
 
   ipcMain.handle("repository:load-commit-diff", async (_event, commitHash: string, filePath: string) => {
     try {
-      return await loadCommitDiff(DEFAULT_REPOSITORY_PATH, commitHash, filePath);
+      return await loadCommitDiff(currentRepositoryPath, commitHash, filePath);
     } catch (error) {
       if (error instanceof RepositoryLoadError) {
         throw error;
@@ -85,7 +176,7 @@ function registerIpcHandlers() {
     "repository:load-wip-diff",
     async (_event, kind: "staged" | "unstaged", filePath: string, status: "A" | "M" | "D" | "R") => {
       try {
-        return await loadWipDiff(DEFAULT_REPOSITORY_PATH, kind, filePath, status);
+        return await loadWipDiff(currentRepositoryPath, kind, filePath, status);
       } catch (error) {
         if (error instanceof RepositoryLoadError) {
           throw error;
@@ -101,11 +192,8 @@ function registerIpcHandlers() {
 app.whenReady().then(() => {
   registerIpcHandlers();
   createWindow();
-  void watchRepositoryChanges(DEFAULT_REPOSITORY_PATH, (event) => {
-    for (const window of BrowserWindow.getAllWindows()) {
-      window.webContents.send(REPOSITORY_CHANGED_CHANNEL, event);
-    }
-  });
+  Menu.setApplicationMenu(createApplicationMenu());
+  void restartRepositoryWatcher();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {

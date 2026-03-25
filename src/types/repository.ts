@@ -30,7 +30,7 @@ export type CommitFileChange = {
   status: FileChangeStatus;
 };
 
-export type RepositoryChangeKind = "head" | "index" | "refs" | "worktree";
+export type RepositoryChangeKind = "head" | "index" | "refs" | "worktree" | "repository";
 
 export type RepositoryChangeEvent = {
   kind: RepositoryChangeKind;
@@ -39,7 +39,7 @@ export type RepositoryChangeEvent = {
 };
 
 export type GitViewerApi = {
-  loadDefaultRepository: () => Promise<RepositorySnapshot>;
+  loadCurrentRepository: () => Promise<RepositorySnapshot>;
   loadCommitFiles: (commitHash: string) => Promise<CommitFileChange[]>;
   loadCommitDiff: (commitHash: string, path: string) => Promise<DiffViewData>;
   loadWipDiff: (kind: WipDiffKind, path: string, status: WipFile["status"]) => Promise<DiffViewData>;
