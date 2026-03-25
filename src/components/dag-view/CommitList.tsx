@@ -22,7 +22,9 @@ export function CommitList({
     <div className="commit-list" style={{ height: (commits.length + (wip ? 1 : 0)) * ROW_HEIGHT }}>
       {wip ? (
         <button
-          className={`commit-row commit-row-wip${selectedCommit.type === "wip" ? " commit-row-selected" : ""}`}
+          className={`commit-row commit-row-with-meta commit-row-wip${
+            selectedCommit.type === "wip" ? " commit-row-selected" : ""
+          }`}
           type="button"
           style={{ height: ROW_HEIGHT }}
           onClick={() => onSelectCommit({ type: "wip" })}
@@ -48,6 +50,7 @@ export function CommitList({
             type="button"
             style={{ height: ROW_HEIGHT }}
             onClick={() => onSelectCommit({ type: "commit", hash: commit.hash })}
+            title={`committer: ${commit.author}\ndate: ${commit.date}\nhash: ${commit.hash}`}
           >
             <span
               className="lane-swatch"
@@ -56,11 +59,6 @@ export function CommitList({
             />
             <span className="commit-message-group">
               <span className="commit-message">{commit.message}</span>
-            </span>
-            <span className="commit-meta">
-              <span>{commit.author}</span>
-              <span>{commit.date}</span>
-              <code>{commit.hash}</code>
             </span>
           </button>
         );

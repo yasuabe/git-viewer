@@ -734,7 +734,7 @@ h1 {
 
 .commit-row {
   display: grid;
-  grid-template-columns: 12px minmax(0, 1fr) auto;
+  grid-template-columns: 12px minmax(0, 1fr);
   align-items: center;
   width: 100%;
   padding: 0 18px;
@@ -744,6 +744,10 @@ h1 {
   color: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+.commit-row-with-meta {
+  grid-template-columns: 12px minmax(0, 1fr) auto;
 }
 
 .commit-row:hover {
