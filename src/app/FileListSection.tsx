@@ -14,6 +14,22 @@ type FileListSectionProps = {
   emptyMessage: string;
 };
 
+function splitPathSegments(path: string) {
+  const lastSlashIndex = path.lastIndexOf("/");
+
+  if (lastSlashIndex === -1) {
+    return {
+      directoryPath: "",
+      fileName: path,
+    };
+  }
+
+  return {
+    directoryPath: path.slice(0, lastSlashIndex + 1),
+    fileName: path.slice(lastSlashIndex + 1),
+  };
+}
+
 export function FileListSection({
   title,
   files,
@@ -38,6 +54,7 @@ export function FileListSection({
         <div className="right-pane-scroll-area">
           <ul className="right-pane-file-list">
             {files.map((file) => {
+              const { directoryPath, fileName } = splitPathSegments(file.path);
               const nextSelectedFile =
                 kind === "commit"
                   ? {
@@ -66,7 +83,12 @@ export function FileListSection({
                     onClick={() => onSelectFile(nextSelectedFile)}
                   >
                     <span className={statusClassName(file.status)}>{file.status}</span>
-                    <code>{file.path}</code>
+                    <code title={file.path}>
+                      {directoryPath ? (
+                        <span className="right-pane-file-directory">{directoryPath}</span>
+                      ) : null}
+                      <span className="right-pane-file-name">{fileName}</span>
+                    </code>
                   </button>
                 </li>
               );
