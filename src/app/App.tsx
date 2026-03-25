@@ -62,57 +62,6 @@ function initialSelection(snapshot: RepositorySnapshot): SelectedCommit | null {
   return null;
 }
 
-function createPlaceholderDiff(selectedFile: Exclude<SelectedFile, { kind: "commit" }>): DiffViewData {
-  const status = selectedFile.status;
-  const path = selectedFile.path;
-
-  if (status === "A") {
-    return {
-      raw: `diff --git a/${path} b/${path}
-new file mode 100644
-index 0000000..1111111
---- /dev/null
-+++ b/${path}
-@@ -0,0 +1,4 @@
-+// Placeholder diff
-+// path: ${path}
-+// source: ${selectedFile.kind}
-+export const todo = true;
-`,
-    };
-  }
-
-  if (status === "D") {
-    return {
-      raw: `diff --git a/${path} b/${path}
-deleted file mode 100644
-index 1111111..0000000
---- a/${path}
-+++ /dev/null
-@@ -1,3 +0,0 @@
--// Placeholder diff
--// path: ${path}
--export const removed = true;
-`,
-    };
-  }
-
-  return {
-    raw: `diff --git a/${path} b/${path}
-index 1111111..2222222 100644
---- a/${path}
-+++ b/${path}
-@@ -1,4 +1,5 @@
--// Placeholder before wiring git diff
-+// Placeholder diff
-+// path: ${path}
- export const source = "${selectedFile.kind}";
- export const status = "${status}";
-+export const pending = true;
-`,
-  };
-}
-
 type FileListSectionProps = {
   title: string;
   files: Array<{ path: string; status: WipFile["status"] }>;
@@ -323,22 +272,23 @@ export default function App() {
       return;
     }
 
+    const nextSelectedFile = selectedFile;
+
     setOverlayDiff(null);
     setOverlayDiffError(null);
-
-    if (selectedFile.kind !== "commit") {
-      setOverlayDiff(createPlaceholderDiff(selectedFile));
-      setIsOverlayDiffLoading(false);
-      return;
-    }
-
-    const { commitHash, path } = selectedFile;
 
     setIsOverlayDiffLoading(true);
 
     async function loadDiff() {
       try {
-        const nextDiff = await window.gitViewer.loadCommitDiff(commitHash, path);
+        const nextDiff =
+          nextSelectedFile.kind === "commit"
+            ? await window.gitViewer.loadCommitDiff(nextSelectedFile.commitHash, nextSelectedFile.path)
+            : await window.gitViewer.loadWipDiff(
+                nextSelectedFile.kind,
+                nextSelectedFile.path,
+                nextSelectedFile.status,
+              );
 
         if (cancelled) {
           return;
@@ -495,7 +445,7 @@ export default function App() {
                   <p className="diff-overlay-meta">
                     {selectedFile.kind === "commit"
                       ? "commit diff · left + center overlay · Esc to close"
-                      : "WIP diff placeholder · left + center overlay · Esc to close"}
+                      : `${selectedFile.kind} diff · left + center overlay · Esc to close`}
                   </p>
                 </div>
                 <button className="selection-action" type="button" onClick={() => setSelectedFile(null)}>

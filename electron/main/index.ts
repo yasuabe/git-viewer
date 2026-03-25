@@ -6,6 +6,7 @@ import {
   loadCommitDiff,
   loadCommitFiles,
   loadRepositorySnapshot,
+  loadWipDiff,
 } from "./git/repository-service";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -77,6 +78,22 @@ function registerIpcHandlers() {
       throw new Error(message);
     }
   });
+
+  ipcMain.handle(
+    "repository:load-wip-diff",
+    async (_event, kind: "staged" | "unstaged", filePath: string, status: "A" | "M" | "D" | "R") => {
+      try {
+        return await loadWipDiff(DEFAULT_REPOSITORY_PATH, kind, filePath, status);
+      } catch (error) {
+        if (error instanceof RepositoryLoadError) {
+          throw error;
+        }
+
+        const message = error instanceof Error ? error.message : "Unexpected WIP diff load failure.";
+        throw new Error(message);
+      }
+    },
+  );
 }
 
 app.whenReady().then(() => {

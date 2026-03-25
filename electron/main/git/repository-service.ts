@@ -1,4 +1,5 @@
 import path from "node:path";
+import { readFile } from "node:fs/promises";
 import simpleGit, { type SimpleGit } from "simple-git";
 import type { DiffViewData } from "../../../src/types/diff";
 import type { CommitNode, Ref, WipFile, WipState } from "../../../src/types/git";
@@ -8,6 +9,7 @@ import type {
   BranchRecord,
   CommitFileChange,
   RepositorySnapshot,
+  WipDiffKind,
 } from "../../../src/types/repository";
 
 const FIELD_SEPARATOR = "\x1f";
@@ -76,6 +78,30 @@ export async function loadCommitDiff(
     "--",
     filePath,
   ]);
+
+  return { raw };
+}
+
+export async function loadWipDiff(
+  repositoryPath: string,
+  kind: WipDiffKind,
+  filePath: string,
+  status: WipFile["status"],
+): Promise<DiffViewData> {
+  const { git, normalizedPath } = await openRepository(repositoryPath);
+
+  if (kind === "unstaged" && status === "A") {
+    return renderUntrackedFileDiff(normalizedPath, filePath);
+  }
+
+  const raw = await git.raw([
+    "diff",
+    kind === "staged" ? "--cached" : undefined,
+    "--find-renames",
+    "--no-ext-diff",
+    "--",
+    filePath,
+  ].filter((arg): arg is string => Boolean(arg)));
 
   return { raw };
 }
@@ -207,17 +233,25 @@ async function loadWipState(git: SimpleGit): Promise<WipState> {
     const x = line[0];
     const y = line[1];
     const rawPath = line.slice(3).trim();
-    const file = {
-      path: normalizeStatusPath(rawPath),
-      status: normalizeStatusCode(x !== " " ? x : y),
-    } satisfies WipFile;
+    const normalizedPath = normalizeStatusPath(rawPath);
 
     if (x !== " " && x !== "?") {
-      staged.push(file);
+      staged.push({
+        path: normalizedPath,
+        status: normalizeStatusCode(x),
+      });
     }
 
-    if (y !== " " || x === "?") {
-      unstaged.push(file);
+    if (y !== " ") {
+      unstaged.push({
+        path: normalizedPath,
+        status: normalizeStatusCode(y),
+      });
+    } else if (x === "?") {
+      unstaged.push({
+        path: normalizedPath,
+        status: "A",
+      });
     }
   }
 
@@ -258,5 +292,29 @@ function parseNameStatusLine(line: string): CommitFileChange | null {
   return {
     path: nextPath,
     status: normalizeStatusCode(rawStatus[0]),
+  };
+}
+
+async function renderUntrackedFileDiff(repositoryPath: string, filePath: string): Promise<DiffViewData> {
+  const absolutePath = path.join(repositoryPath, filePath);
+  const source = await readFile(absolutePath, "utf8");
+  const normalizedSource = source.replace(/\r\n/g, "\n");
+  const lines = normalizedSource.length > 0 ? normalizedSource.split("\n") : [];
+
+  if (normalizedSource.endsWith("\n")) {
+    lines.pop();
+  }
+
+  const contentLines = lines.length > 0 ? lines.map((line) => `+${line}`).join("\n") : "+";
+  const lineCount = Math.max(lines.length, 1);
+
+  return {
+    raw: `diff --git a/${filePath} b/${filePath}
+new file mode 100644
+--- /dev/null
++++ b/${filePath}
+@@ -0,0 +1,${lineCount} @@
+${contentLines}
+`,
   };
 }

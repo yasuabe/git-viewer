@@ -23,6 +23,7 @@ export type RepositorySnapshot = {
 };
 
 export type FileChangeStatus = WipFile["status"];
+export type WipDiffKind = "staged" | "unstaged";
 
 export type CommitFileChange = {
   path: string;
@@ -33,4 +34,5 @@ export type GitViewerApi = {
   loadDefaultRepository: () => Promise<RepositorySnapshot>;
   loadCommitFiles: (commitHash: string) => Promise<CommitFileChange[]>;
   loadCommitDiff: (commitHash: string, path: string) => Promise<DiffViewData>;
+  loadWipDiff: (kind: WipDiffKind, path: string, status: WipFile["status"]) => Promise<DiffViewData>;
 };

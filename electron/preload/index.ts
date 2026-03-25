@@ -11,6 +11,9 @@ const gitViewerApi: GitViewerApi = {
   loadCommitDiff(commitHash, path) {
     return ipcRenderer.invoke("repository:load-commit-diff", commitHash, path);
   },
+  loadWipDiff(kind, path, status) {
+    return ipcRenderer.invoke("repository:load-wip-diff", kind, path, status);
+  },
 };
 
 contextBridge.exposeInMainWorld("gitViewer", gitViewerApi);
