@@ -1,4 +1,5 @@
 import type { CommitNode, LaneEntry, SelectedCommit, WipState } from "../../types/git";
+import { formatShortHash } from "../../app/format";
 import { ROW_HEIGHT } from "./dag-view-constants";
 
 type CommitListProps = {
@@ -50,7 +51,7 @@ export function CommitList({
             type="button"
             style={{ height: ROW_HEIGHT }}
             onClick={() => onSelectCommit({ type: "commit", hash: commit.hash })}
-            title={`committer: ${commit.author}\ndate: ${commit.date}\nhash: ${commit.hash}`}
+            title={`committer: ${commit.author}\ndate: ${commit.date}\nhash: ${formatShortHash(commit.hash)}`}
           >
             <span
               className="lane-swatch"

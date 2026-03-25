@@ -5,6 +5,7 @@ import DiffView from "../components/diff-view/DiffView";
 import { FileListSection } from "./FileListSection";
 import {
   formatRepositoryChange,
+  formatShortHash,
   lastPathSegment,
   refSummary,
   splitCommitMessage,
@@ -289,7 +290,7 @@ export default function App() {
                   <span>{selectedNode.author}</span>
                   <span>{selectedNode.date}</span>
                 </p>
-                <code className="right-pane-code">{selectedNode.hash}</code>
+                <code className="right-pane-code">{formatShortHash(selectedNode.hash)}</code>
               </section>
               <button
                 className={`right-pane-drag-handle${isCommitDragging ? " right-pane-drag-handle-dragging" : ""}`}

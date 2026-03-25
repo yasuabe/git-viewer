@@ -1,6 +1,8 @@
 import type { BranchRecord, RepositoryChangeEvent } from "../types/repository";
 import type { WipFile } from "../types/git";
 
+const SHORT_HASH_LENGTH = 6;
+
 export function statusClassName(status: WipFile["status"]): string {
   return `wip-status wip-status-${status.toLowerCase()}`;
 }
@@ -30,6 +32,10 @@ export function splitCommitMessage(message: string) {
     subject,
     body: bodyLines.join("\n").trim(),
   };
+}
+
+export function formatShortHash(hash: string) {
+  return hash.slice(0, SHORT_HASH_LENGTH);
 }
 
 export function formatRepositoryChange(event: RepositoryChangeEvent | null): string {
