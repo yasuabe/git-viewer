@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { DagView } from "../components/dag-view/DagView";
 import { assignLanes } from "../components/dag-view/layout/assign-lanes";
 import DiffView from "../components/diff-view/DiffView";
@@ -16,6 +16,7 @@ import { useRightPaneSplit } from "./useRightPaneSplit";
 import { useRepositorySync } from "./useRepositorySync";
 
 export default function App() {
+  const [isLeftPaneOpen, setIsLeftPaneOpen] = useState(true);
   const {
     snapshot,
     selectedCommit,
@@ -94,45 +95,68 @@ export default function App() {
       </section>
 
       <section className="app-main">
-        <div className="app-workspace">
-          <aside className="app-pane app-pane-left" aria-label="Branch tree">
-            <div className="pane-header">
-              <span>左ペイン</span>
-            </div>
-            <div className="pane-body branch-tree">
-              <section className="branch-section">
-                <p className="branch-section-title">LOCAL</p>
-                <ul className="branch-list">
-                  {refGroups.local.map((ref) => (
-                    <li key={ref.fullName} className={`branch-item${ref.isHead ? " branch-item-active" : ""}`}>
-                      <span className="branch-marker">{ref.isHead ? "✓" : ""}</span>
-                      <span>{ref.name}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-              <section className="branch-section">
-                <p className="branch-section-title">REMOTE</p>
-                <ul className="branch-list">
-                  {refGroups.remote.map((ref) => (
-                    <li key={ref.fullName} className="branch-item">
+        <div className={`app-workspace${isLeftPaneOpen ? "" : " app-workspace-left-collapsed"}`}>
+          {isLeftPaneOpen ? (
+            <aside className="app-pane app-pane-left" aria-label="Branch tree">
+              <div className="pane-header pane-header-left">
+                <button
+                  className="app-pane-toggle"
+                  type="button"
+                  aria-label="Hide left pane"
+                  onClick={() => setIsLeftPaneOpen(false)}
+                >
+                  &lt;
+                </button>
+                <span>VIEWING 1</span>
+              </div>
+              <div className="pane-body branch-tree">
+                <section className="branch-section">
+                  <p className="branch-section-title">LOCAL</p>
+                  <ul className="branch-list">
+                    {refGroups.local.map((ref) => (
+                      <li key={ref.fullName} className={`branch-item${ref.isHead ? " branch-item-active" : ""}`}>
+                        <span className="branch-marker">{ref.isHead ? "✓" : ""}</span>
+                        <span>{ref.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+                <section className="branch-section">
+                  <p className="branch-section-title">REMOTE</p>
+                  <ul className="branch-list">
+                    {refGroups.remote.map((ref) => (
+                      <li key={ref.fullName} className="branch-item">
+                        <span className="branch-marker" />
+                        <span>{ref.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+                <section className="branch-section">
+                  <p className="branch-section-title">WORKTREES</p>
+                  <ul className="branch-list">
+                    <li className="branch-item">
                       <span className="branch-marker" />
-                      <span>{ref.name}</span>
+                      <span>{currentBranch?.name ?? repositoryLabel}</span>
                     </li>
-                  ))}
-                </ul>
-              </section>
-              <section className="branch-section">
-                <p className="branch-section-title">WORKTREES</p>
-                <ul className="branch-list">
-                  <li className="branch-item">
-                    <span className="branch-marker" />
-                    <span>{currentBranch?.name ?? repositoryLabel}</span>
-                  </li>
-                </ul>
-              </section>
-            </div>
-          </aside>
+                  </ul>
+                </section>
+              </div>
+            </aside>
+          ) : (
+            <aside className="app-pane app-pane-left-collapsed" aria-label="Branch tree collapsed">
+              <div className="pane-header pane-header-left-collapsed">
+                <button
+                  className="app-pane-toggle"
+                  type="button"
+                  aria-label="Show left pane"
+                  onClick={() => setIsLeftPaneOpen(true)}
+                >
+                  &gt;
+                </button>
+              </div>
+            </aside>
+          )}
 
           <section className="app-pane app-pane-center" aria-label="Main view">
             <div className="pane-header pane-header-grid">

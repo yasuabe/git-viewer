@@ -163,6 +163,10 @@ code {
   overflow: hidden;
 }
 
+.app-workspace-left-collapsed {
+  grid-template-columns: 30px minmax(0, 1fr);
+}
+
 .app-pane {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -176,6 +180,10 @@ code {
   border-right: none;
 }
 
+.app-pane-left-collapsed {
+  border-right: 1px solid rgba(148, 163, 184, 0.12);
+}
+
 .pane-header {
   display: flex;
   align-items: center;
@@ -184,6 +192,15 @@ code {
   border-bottom: 1px solid rgba(148, 163, 184, 0.12);
   color: #a1a1aa;
   font-size: 12px;
+}
+
+.pane-header-left {
+  gap: 8px;
+}
+
+.pane-header-left-collapsed {
+  justify-content: center;
+  padding: 0;
 }
 
 .pane-header-grid {
@@ -240,6 +257,25 @@ code {
   color: #cbd5e1;
   font-size: 14px;
 }
+
+.app-pane-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 999px;
+  background: rgba(63, 63, 60, 0.96);
+  color: #d4d4d8;
+  cursor: pointer;
+}
+
+.app-pane-toggle:hover {
+  background: rgba(82, 82, 77, 0.96);
+}
+
 
 .branch-item-active {
   color: #f8fafc;
