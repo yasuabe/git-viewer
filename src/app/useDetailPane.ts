@@ -1,13 +1,14 @@
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DiffViewData } from "../types/diff";
 import type { CommitFileChange, RepositorySnapshot } from "../types/repository";
 import type { SelectedCommit } from "../types/git";
-import { resolveSelectedFile } from "./selection";
+import { resolveSelectedFile, selectedFileKey } from "./selection";
 import type { SelectedFile } from "./types";
 
 type UseDetailPaneResult = {
   selectedFile: SelectedFile | null;
-  setSelectedFile: Dispatch<SetStateAction<SelectedFile | null>>;
+  openSelectedFile: (selectedFile: SelectedFile) => void;
+  closeSelectedFile: (options?: { restoreFocus?: boolean }) => void;
   commitFiles: CommitFileChange[];
   commitFilesError: string | null;
   isCommitFilesLoading: boolean;
@@ -28,10 +29,46 @@ export function useDetailPane(
   const [overlayDiffError, setOverlayDiffError] = useState<string | null>(null);
   const [isOverlayDiffLoading, setIsOverlayDiffLoading] = useState(false);
   const selectedFileRef = useRef<SelectedFile | null>(null);
+  const lastSelectedFileKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     selectedFileRef.current = selectedFile;
   }, [selectedFile]);
+
+  function restoreSelectedFileFocus() {
+    const key = lastSelectedFileKeyRef.current;
+
+    if (!key) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      const selector = `[data-file-selection-key="${CSS.escape(key)}"]`;
+      const button = document.querySelector<HTMLButtonElement>(selector);
+      button?.focus();
+    });
+  }
+
+  function closeSelectedFile(options?: { restoreFocus?: boolean }) {
+    setSelectedFile(null);
+
+    if (options?.restoreFocus) {
+      restoreSelectedFileFocus();
+    }
+  }
+
+  function openSelectedFile(nextSelectedFile: SelectedFile) {
+    lastSelectedFileKeyRef.current = selectedFileKey(nextSelectedFile);
+
+    setSelectedFile((currentSelectedFile) => {
+      if (currentSelectedFile && selectedFileKey(currentSelectedFile) === selectedFileKey(nextSelectedFile)) {
+        restoreSelectedFileFocus();
+        return null;
+      }
+
+      return nextSelectedFile;
+    });
+  }
 
   useEffect(() => {
     if (!snapshot) {
@@ -99,7 +136,7 @@ export function useDetailPane(
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setSelectedFile(null);
+        closeSelectedFile({ restoreFocus: true });
       }
     }
 
@@ -165,7 +202,8 @@ export function useDetailPane(
 
   return {
     selectedFile,
-    setSelectedFile,
+    openSelectedFile,
+    closeSelectedFile,
     commitFiles,
     commitFilesError,
     isCommitFilesLoading,

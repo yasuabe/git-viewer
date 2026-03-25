@@ -25,7 +25,8 @@ export default function App() {
   } = useRepositorySync();
   const {
     selectedFile,
-    setSelectedFile,
+    openSelectedFile,
+    closeSelectedFile,
     commitFiles,
     commitFilesError,
     isCommitFilesLoading,
@@ -166,7 +167,11 @@ export default function App() {
                       : `${selectedFile.kind} diff · left + center overlay · Esc to close`}
                   </p>
                 </div>
-                <button className="selection-action" type="button" onClick={() => setSelectedFile(null)}>
+                <button
+                  className="selection-action"
+                  type="button"
+                  onClick={() => closeSelectedFile({ restoreFocus: true })}
+                >
                   Close
                 </button>
               </div>
@@ -208,7 +213,7 @@ export default function App() {
                 title="Unstaged"
                 files={snapshot.wip.unstaged}
                 selectedFile={selectedFile}
-                onSelectFile={setSelectedFile}
+                onSelectFile={openSelectedFile}
                 kind="unstaged"
                 emptyMessage="未ステージの変更はありません。"
               />
@@ -216,7 +221,7 @@ export default function App() {
                 title="Staged"
                 files={snapshot.wip.staged}
                 selectedFile={selectedFile}
-                onSelectFile={setSelectedFile}
+                onSelectFile={openSelectedFile}
                 kind="staged"
                 emptyMessage="ステージ済みの変更はありません。"
               />
@@ -240,7 +245,7 @@ export default function App() {
                 title="Changed files"
                 files={commitFiles}
                 selectedFile={selectedFile}
-                onSelectFile={setSelectedFile}
+                onSelectFile={openSelectedFile}
                 kind="commit"
                 commitHash={selectedNode.hash}
                 isLoading={isCommitFilesLoading}

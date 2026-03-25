@@ -1,4 +1,5 @@
 import { statusClassName } from "./format";
+import { selectedFileKey } from "./selection";
 import type { SelectedFile } from "./types";
 import type { WipFile } from "../types/git";
 
@@ -37,6 +38,19 @@ export function FileListSection({
         <div className="right-pane-scroll-area">
           <ul className="right-pane-file-list">
             {files.map((file) => {
+              const nextSelectedFile =
+                kind === "commit"
+                  ? {
+                      kind,
+                      commitHash: commitHash ?? "",
+                      path: file.path,
+                      status: file.status,
+                    }
+                  : {
+                      kind,
+                      path: file.path,
+                      status: file.status,
+                    };
               const isActive =
                 selectedFile?.path === file.path &&
                 selectedFile.kind === kind &&
@@ -47,22 +61,9 @@ export function FileListSection({
                   <button
                     className={`right-pane-file-button${isActive ? " right-pane-file-button-active" : ""}`}
                     type="button"
-                    onClick={() =>
-                      onSelectFile(
-                        kind === "commit"
-                          ? {
-                              kind,
-                              commitHash: commitHash ?? "",
-                              path: file.path,
-                              status: file.status,
-                            }
-                          : {
-                              kind,
-                              path: file.path,
-                              status: file.status,
-                            },
-                      )
-                    }
+                    aria-pressed={isActive}
+                    data-file-selection-key={selectedFileKey(nextSelectedFile)}
+                    onClick={() => onSelectFile(nextSelectedFile)}
                   >
                     <span className={statusClassName(file.status)}>{file.status}</span>
                     <code>{file.path}</code>

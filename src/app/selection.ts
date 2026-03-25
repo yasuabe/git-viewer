@@ -56,3 +56,11 @@ export function resolveSelectedFile(
     ? { ...previousSelectedFile }
     : null;
 }
+
+export function selectedFileKey(selectedFile: SelectedFile): string {
+  if (selectedFile.kind === "commit") {
+    return `commit:${selectedFile.commitHash}:${selectedFile.path}`;
+  }
+
+  return `${selectedFile.kind}:${selectedFile.path}`;
+}
