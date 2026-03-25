@@ -125,14 +125,6 @@ function createApplicationMenu() {
         },
       ],
     },
-    {
-      label: "View",
-      submenu: [{ role: "reload" }, { role: "forceReload" }, { role: "toggleDevTools" }],
-    },
-    {
-      label: "Window",
-      submenu: [{ role: "minimize" }, { role: "close" }],
-    },
   ]);
 }
 
