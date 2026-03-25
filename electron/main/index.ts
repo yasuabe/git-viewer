@@ -19,6 +19,10 @@ const REPOSITORY_CHANGED_CHANNEL = "repository:changed";
 let currentRepositoryPath = DEFAULT_REPOSITORY_PATH;
 let stopWatchingRepository: (() => void) | null = null;
 
+if (process.platform === "linux") {
+  app.commandLine.appendSwitch("disable-gpu");
+}
+
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
     width: 1440,
