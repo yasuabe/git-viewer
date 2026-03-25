@@ -417,7 +417,7 @@ code {
 
 .right-pane-file-list {
   display: grid;
-  gap: 6px;
+  gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -429,12 +429,14 @@ code {
   gap: 10px;
   width: 100%;
   min-width: 0;
-  padding: 8px 10px;
+  padding: 3px 10px;
   border: 1px solid transparent;
   border-radius: 10px;
   background: transparent;
   color: inherit;
   text-align: left;
+  font-size: 13px;
+  line-height: 1.3;
   cursor: pointer;
 }
 
