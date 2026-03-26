@@ -14,7 +14,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RENDERER_DIST = path.join(__dirname, "../renderer");
 const PRELOAD_ENTRY = path.join(__dirname, "../preload/index.mjs");
 const DEFAULT_REPOSITORY_PATH = process.env.GIT_VIEWER_REPOSITORY_PATH ?? app.getAppPath();
-const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
+const ELECTRON_RENDERER_URL = process.env.ELECTRON_RENDERER_URL;
 const REPOSITORY_CHANGED_CHANNEL = "repository:changed";
 let currentRepositoryPath = DEFAULT_REPOSITORY_PATH;
 let stopWatchingRepository: (() => void) | null = null;
@@ -38,8 +38,8 @@ function createWindow(): BrowserWindow {
     },
   });
 
-  if (VITE_DEV_SERVER_URL) {
-    void window.loadURL(VITE_DEV_SERVER_URL);
+  if (ELECTRON_RENDERER_URL) {
+    void window.loadURL(ELECTRON_RENDERER_URL);
   } else {
     void window.loadFile(path.join(RENDERER_DIST, "index.html"));
   }
