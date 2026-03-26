@@ -49,8 +49,16 @@ export default function App() {
     startCommitDrag,
     startWipDrag,
   } = useRightPaneSplit();
-  const { containerRef: appMainRef, appMainGridTemplateColumns, isDragging, startDragging } =
-    usePaneWidth();
+  const {
+    appMainRef,
+    workspaceRef,
+    appMainGridTemplateColumns,
+    workspaceGridTemplateColumns,
+    isLeftDragging,
+    isRightDragging,
+    startLeftDragging,
+    startRightDragging,
+  } = usePaneWidth();
 
   const laneEntries = useMemo(
     () => (snapshot ? assignLanes(snapshot.commits) : []),
@@ -99,7 +107,11 @@ export default function App() {
       </section>
 
       <section ref={appMainRef} className="app-main" style={{ gridTemplateColumns: appMainGridTemplateColumns }}>
-        <div className={`app-workspace${isLeftPaneOpen ? "" : " app-workspace-left-collapsed"}`}>
+        <div
+          ref={workspaceRef}
+          className={`app-workspace${isLeftPaneOpen ? "" : " app-workspace-left-collapsed"}`}
+          style={isLeftPaneOpen ? { gridTemplateColumns: workspaceGridTemplateColumns } : undefined}
+        >
           {isLeftPaneOpen ? (
             <aside className="app-pane app-pane-left" aria-label="Branch tree">
               <div className="pane-header pane-header-left">
@@ -160,6 +172,17 @@ export default function App() {
                 </button>
               </div>
             </aside>
+          )}
+
+          {isLeftPaneOpen ? (
+            <button
+              className={`app-pane-resize-handle${isLeftDragging ? " app-pane-resize-handle-dragging" : ""}`}
+              type="button"
+              aria-label="Resize left pane"
+              onPointerDown={startLeftDragging}
+            />
+          ) : (
+            null
           )}
 
           <section className="app-pane app-pane-center" aria-label="Main view">
@@ -233,10 +256,10 @@ export default function App() {
         </div>
 
         <button
-          className={`app-pane-resize-handle${isDragging ? " app-pane-resize-handle-dragging" : ""}`}
+          className={`app-pane-resize-handle${isRightDragging ? " app-pane-resize-handle-dragging" : ""}`}
           type="button"
           aria-label="Resize right pane"
-          onPointerDown={startDragging}
+          onPointerDown={startRightDragging}
         />
 
         <aside className="app-pane app-pane-right" aria-label="Commit details">
