@@ -13,6 +13,7 @@ import {
 } from "./format";
 import { hasWipChanges } from "./selection";
 import { useDetailPane } from "./useDetailPane";
+import { usePaneWidth } from "./usePaneWidth";
 import { useRightPaneSplit } from "./useRightPaneSplit";
 import { useRepositorySync } from "./useRepositorySync";
 
@@ -48,6 +49,8 @@ export default function App() {
     startCommitDrag,
     startWipDrag,
   } = useRightPaneSplit();
+  const { containerRef: appMainRef, appMainGridTemplateColumns, isDragging, startDragging } =
+    usePaneWidth();
 
   const laneEntries = useMemo(
     () => (snapshot ? assignLanes(snapshot.commits) : []),
@@ -95,7 +98,7 @@ export default function App() {
         </div>
       </section>
 
-      <section className="app-main">
+      <section ref={appMainRef} className="app-main" style={{ gridTemplateColumns: appMainGridTemplateColumns }}>
         <div className={`app-workspace${isLeftPaneOpen ? "" : " app-workspace-left-collapsed"}`}>
           {isLeftPaneOpen ? (
             <aside className="app-pane app-pane-left" aria-label="Branch tree">
@@ -228,6 +231,13 @@ export default function App() {
             </section>
           ) : null}
         </div>
+
+        <button
+          className={`app-pane-resize-handle${isDragging ? " app-pane-resize-handle-dragging" : ""}`}
+          type="button"
+          aria-label="Resize right pane"
+          onPointerDown={startDragging}
+        />
 
         <aside className="app-pane app-pane-right" aria-label="Commit details">
           <div className="pane-header">

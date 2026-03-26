@@ -142,7 +142,7 @@ code {
   height: 100%;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) 12px 320px;
   overflow: hidden;
 }
 
@@ -171,6 +171,39 @@ code {
 
 .app-pane-right {
   border-right: none;
+}
+
+.app-pane-resize-handle {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid rgba(148, 163, 184, 0.12);
+  border-right: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(8, 17, 31, 0.96);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.app-pane-resize-handle::before {
+  content: "";
+  display: block;
+  width: 4px;
+  height: 44px;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.3);
+}
+
+.app-pane-resize-handle:hover::before,
+.app-pane-resize-handle-dragging::before {
+  background: rgba(125, 211, 252, 0.52);
+}
+
+.app-pane-resize-handle:focus-visible {
+  outline: 1px solid rgba(125, 211, 252, 0.5);
+  outline-offset: -1px;
 }
 
 .app-pane-left-collapsed {
