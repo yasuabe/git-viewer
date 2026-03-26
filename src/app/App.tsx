@@ -222,20 +222,14 @@ export default function App() {
           {selectedFile ? (
             <section className="diff-overlay" aria-label="Diff overlay">
               <div className="diff-overlay-header">
-                <div>
-                  <p className="diff-overlay-title">{selectedFile.path}</p>
-                  <p className="diff-overlay-meta">
-                    {selectedFile.kind === "commit"
-                      ? "commit diff · left + center overlay · Esc to close"
-                      : `${selectedFile.kind} diff · left + center overlay · Esc to close`}
-                  </p>
-                </div>
+                <p className="diff-overlay-title">{selectedFile.path}</p>
                 <button
-                  className="selection-action"
+                  className="diff-overlay-close"
                   type="button"
+                  aria-label="Close diff overlay"
                   onClick={() => closeSelectedFile({ restoreFocus: true })}
                 >
-                  Close
+                  ×
                 </button>
               </div>
               {isOverlayDiffLoading ? (

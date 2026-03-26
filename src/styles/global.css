@@ -543,7 +543,7 @@ code {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-height: 54px;
+  min-height: 42px;
   padding: 0 18px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.12);
   background: rgba(19, 25, 40, 0.92);
@@ -551,15 +551,37 @@ code {
 
 .diff-overlay-title {
   margin: 0;
-  color: #f8fafc;
-  font-size: 15px;
-  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  color: #dbe4ee;
+  font-size: 13px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.diff-overlay-meta {
-  margin: 4px 0 0;
-  color: #94a3b8;
-  font-size: 12px;
+.diff-overlay-close {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 6px;
+  background: rgba(30, 41, 59, 0.6);
+  color: #cbd5e1;
+  cursor: pointer;
+}
+
+.diff-overlay-close:hover {
+  background: rgba(51, 65, 85, 0.8);
+}
+
+.diff-overlay-close:focus-visible {
+  outline: 1px solid rgba(125, 211, 252, 0.5);
+  outline-offset: 1px;
 }
 
 .app-summary-grid {
