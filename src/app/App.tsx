@@ -69,6 +69,9 @@ export default function App() {
       : null;
   const hasWip = snapshot ? hasWipChanges(snapshot) : false;
   const commitMessageParts = splitCommitMessage(selectedNode?.message ?? "");
+  const parentCommitLabel = selectedNode?.parents[0]
+    ? `parent: ${formatShortHash(selectedNode.parents[0])}`
+    : "initial commit";
 
   return (
     <main className="desktop-shell">
@@ -231,7 +234,16 @@ export default function App() {
 
         <aside className="app-pane app-pane-right" aria-label="Commit details">
           <div className="pane-header">
-            <span>右ペイン</span>
+            {selectedCommit?.type === "commit" && selectedNode ? (
+              <span className="pane-header-commit-label">
+                <span>commit:</span>
+                <code>{formatShortHash(selectedNode.hash)}</code>
+              </span>
+            ) : selectedCommit?.type === "wip" ? (
+              <span>WIP</span>
+            ) : (
+              <span>右ペイン</span>
+            )}
           </div>
 
           {isLoading ? (
@@ -289,8 +301,8 @@ export default function App() {
                 <p className="right-pane-meta-line">
                   <span>{selectedNode.author}</span>
                   <span>{selectedNode.date}</span>
+                  <span>{parentCommitLabel}</span>
                 </p>
-                <code className="right-pane-code">{formatShortHash(selectedNode.hash)}</code>
               </section>
               <button
                 className={`right-pane-drag-handle${isCommitDragging ? " right-pane-drag-handle-dragging" : ""}`}

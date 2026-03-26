@@ -194,6 +194,18 @@ code {
   font-size: 12px;
 }
 
+.pane-header-commit-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.pane-header-commit-label code {
+  color: #dbeafe;
+  font-size: 13px;
+  font-weight: 500;
+}
+
 .pane-header-left {
   gap: 8px;
 }
