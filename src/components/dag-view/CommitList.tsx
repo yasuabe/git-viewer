@@ -10,6 +10,16 @@ type CommitListProps = {
   onSelectCommit: (selectedCommit: SelectedCommit) => void;
 };
 
+function splitCommitMessage(message: string) {
+  const [subjectLine = "", ...bodyLines] = message.split("\n");
+  const body = bodyLines.join(" ").trim();
+
+  return {
+    subject: subjectLine.trim(),
+    body,
+  };
+}
+
 export function CommitList({
   commits,
   laneEntries,
@@ -43,6 +53,7 @@ export function CommitList({
         const laneEntry = laneEntries[index];
         const isSelected =
           selectedCommit.type === "commit" && selectedCommit.hash === commit.hash;
+        const { subject, body } = splitCommitMessage(commit.message);
 
         return (
           <button
@@ -59,7 +70,10 @@ export function CommitList({
               aria-hidden="true"
             />
             <span className="commit-message-group">
-              <span className="commit-message">{commit.message}</span>
+              <span className="commit-message">
+                <span className="commit-message-subject">{subject}</span>
+                {body ? <span className="commit-message-body"> {body}</span> : null}
+              </span>
             </span>
           </button>
         );
