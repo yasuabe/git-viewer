@@ -82,9 +82,6 @@ export default function App() {
             ×
           </span>
         </button>
-        <button className="app-tab app-tab-add" type="button" aria-label="Add repository tab">
-          +
-        </button>
       </section>
 
       <section className="app-toolbar" aria-label="Repository toolbar">

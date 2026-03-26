@@ -93,13 +93,6 @@ code {
   color: #f8fafc;
 }
 
-.app-tab-add {
-  border-style: dashed;
-  border-radius: 6px;
-  min-width: 32px;
-  justify-content: center;
-}
-
 .app-tab-close {
   color: #94a3b8;
 }
