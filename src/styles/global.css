@@ -975,12 +975,12 @@ h1 {
   color: #cbd5e1;
   font-size: 12px;
   line-height: 1.3;
-  font-weight: 300;
+  font-weight: 340;
 }
 
 .commit-message-subject {
   color: #DDE4EE;
-  font-weight: 350;
+  font-weight: 360;
 }
 
 .commit-message-body {
