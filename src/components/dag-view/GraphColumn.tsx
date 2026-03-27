@@ -181,7 +181,7 @@ export function GraphColumn({
         const headY = headRow * ROW_HEIGHT + ROW_HEIGHT / 2;
 
         context.save();
-        context.strokeStyle = headLaneEntry?.color ?? "#7dd3fc";
+        context.strokeStyle = headLaneEntry?.color ?? "#6D8BA3";
         context.lineWidth = 2;
         context.setLineDash([3, 3]);
         context.beginPath();
@@ -192,7 +192,7 @@ export function GraphColumn({
       }
 
       context.save();
-      context.strokeStyle = headLaneEntry?.color ?? "#7dd3fc";
+      context.strokeStyle = headLaneEntry?.color ?? "#6D8BA3";
       context.lineWidth = 2;
       context.setLineDash([2, 3]);
       context.beginPath();

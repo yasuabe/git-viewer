@@ -1,6 +1,6 @@
 import type { CommitNode, LaneEntry, ParentLink } from "../../../types/git";
 
-const LANE_COLORS = ["#7dd3fc", "#f472b6", "#fbbf24", "#34d399", "#c084fc", "#fb7185"];
+const LANE_COLORS = ["#6D8BA3", "#7AA893", "#7A975C", "#B08A5A", "#9D6B74", "#7A6F9F"];
 
 function nextFreeLane(occupied: Set<number>, start = 0): number {
   let lane = start;
