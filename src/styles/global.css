@@ -888,10 +888,10 @@ h1 {
 
 .commit-row {
   display: grid;
-  grid-template-columns: 12px minmax(0, 1fr);
+  grid-template-columns: 6px minmax(0, 1fr);
   align-items: center;
   width: 100%;
-  padding: 0 18px;
+  padding: 0 18px 0 0;
   border: 0;
   border-bottom: 1px solid rgba(148, 163, 184, 0.08);
   background: transparent;
@@ -901,7 +901,7 @@ h1 {
 }
 
 .commit-row-with-meta {
-  grid-template-columns: 12px minmax(0, 1fr) auto;
+  grid-template-columns: 6px minmax(0, 1fr) auto;
 }
 
 .commit-row:hover {
@@ -917,7 +917,7 @@ h1 {
 }
 
 .lane-swatch {
-  width: 4px;
+  width: 2px;
   height: 22px;
   border-radius: 999px;
 }
@@ -930,7 +930,7 @@ h1 {
   display: flex;
   align-items: center;
   min-width: 0;
-  padding: 0 14px;
+  padding: 0 14px 0 7px;
 }
 
 .ref-list {
