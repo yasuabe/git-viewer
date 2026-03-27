@@ -1,7 +1,8 @@
 ## TODO 
-- [ ] DAG: COMMIT MESSAGE 列の左端の縦線を少し細くする
 - [ ] DAG: push しても リモートブランチの ref pill が更新されない事象を修正する
+- [ ] DAG: COMMIT MESSAGE 列の左端の縦線を少し細くする
 - [ ] DAG: BRANCH/TAG 列に `HEAD`,`main`, `origin`, `origin/main` が含まれる時に改行してしまっている
+- [ ] DAG: 各列の列幅を可変にする
 - [ ] 運用: インストーラー
 - [ ] 画面全体: 再描画時の画面のちらつきが大きい
 
