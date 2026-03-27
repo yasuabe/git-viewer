@@ -1,5 +1,4 @@
 ## TODO 
-- [ ] DAG: push しても リモートブランチの ref pill が更新されない事象を修正する
 - [ ] DAG: COMMIT MESSAGE 列の左端の縦線を少し細くする
 - [ ] DAG: BRANCH/TAG 列に `HEAD`,`main`, `origin`, `origin/main` が含まれる時に改行してしまっている
 - [ ] DAG: 各列の列幅を可変にする
@@ -44,6 +43,7 @@
 - [x] DAG: ref pill のコントラストを上げて視認性を改善する
 - [x] DAG: WIP 行の文字表示スタイルをコミット行のコミットメッセージ本文に合わせる
 - [x] DAG: レーン色を落ち着いた配色に見直す
+- [x] DAG: push しても リモートブランチの ref pill が更新されない事象を修正する
 
 # NEXT PHASE
 - [ ] 右ペイン: Tree 上に表示できるようにする

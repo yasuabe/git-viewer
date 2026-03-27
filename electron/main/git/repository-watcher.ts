@@ -6,15 +6,12 @@ import type { RepositoryChangeEvent, RepositoryChangeKind } from "../../../src/t
 type StopWatching = () => void;
 const STATUS_POLL_INTERVAL_MS = 1500;
 const STATUS_COMMAND = ["status", "--porcelain=v1", "--untracked-files=all"] as const;
+const REFS_POLL_INTERVAL_MS = 1500;
+const REFS_COMMAND = ["for-each-ref", "refs/heads", "refs/remotes", "refs/tags"] as const;
 
 type RepositoryRootTarget = {
   directory: string;
   fileKinds: Record<string, RepositoryChangeKind>;
-};
-
-type RefsTarget = {
-  directory: string;
-  kind: "refs";
 };
 
 export async function watchRepositoryChanges(
@@ -34,21 +31,15 @@ export async function watchRepositoryChanges(
       "packed-refs": "refs",
     },
   };
-  const refsTargets: RefsTarget[] = [
-    { directory: path.join(gitDirPath, "refs", "heads"), kind: "refs" },
-    { directory: path.join(gitDirPath, "refs", "remotes"), kind: "refs" },
-    { directory: path.join(gitDirPath, "refs", "tags"), kind: "refs" },
-  ];
-
-  const watchers = [
-    createRepositoryRootWatcher(rootTarget, onChange),
-    ...refsTargets.map((target) => createRefsWatcher(target, onChange)),
-  ]
-    .filter((watcher): watcher is FSWatcher => watcher !== null);
+  const watchers = [createRepositoryRootWatcher(rootTarget, onChange)].filter(
+    (watcher): watcher is FSWatcher => watcher !== null,
+  );
   const stopPollingStatus = startStatusPolling(normalizedRepositoryPath, git, onChange);
+  const stopPollingRefs = startRefsPolling(gitDirPath, git, onChange);
 
   return () => {
     stopPollingStatus();
+    stopPollingRefs();
 
     for (const watcher of watchers) {
       watcher.close();
@@ -77,25 +68,6 @@ function createRepositoryRootWatcher(
       onChange({
         kind,
         path: path.join(target.directory, normalizedFilename),
-        occurredAt: new Date().toISOString(),
-      });
-    });
-  } catch {
-    return null;
-  }
-}
-
-function createRefsWatcher(
-  target: RefsTarget,
-  onChange: (event: RepositoryChangeEvent) => void,
-): FSWatcher | null {
-  try {
-    return watch(target.directory, (_eventType, filename) => {
-      const normalizedFilename = normalizeFilename(filename);
-
-      onChange({
-        kind: target.kind,
-        path: normalizedFilename ? path.join(target.directory, normalizedFilename) : target.directory,
         occurredAt: new Date().toISOString(),
       });
     });
@@ -155,6 +127,55 @@ function startStatusPolling(
   const intervalId = setInterval(() => {
     void pollStatus();
   }, STATUS_POLL_INTERVAL_MS);
+
+  return () => {
+    clearInterval(intervalId);
+  };
+}
+
+function startRefsPolling(
+  gitDirPath: string,
+  git: ReturnType<typeof simpleGit>,
+  onChange: (event: RepositoryChangeEvent) => void,
+): StopWatching {
+  let previousRefsOutput: string | null = null;
+  let isPolling = false;
+
+  async function pollRefs() {
+    if (isPolling) {
+      return;
+    }
+
+    isPolling = true;
+
+    try {
+      const nextRefsOutput = await git.raw([...REFS_COMMAND]);
+
+      if (previousRefsOutput === null) {
+        previousRefsOutput = nextRefsOutput;
+        return;
+      }
+
+      if (nextRefsOutput !== previousRefsOutput) {
+        previousRefsOutput = nextRefsOutput;
+        onChange({
+          kind: "refs",
+          path: path.join(gitDirPath, "refs"),
+          occurredAt: new Date().toISOString(),
+        });
+      }
+    } catch {
+      return;
+    } finally {
+      isPolling = false;
+    }
+  }
+
+  void pollRefs();
+
+  const intervalId = setInterval(() => {
+    void pollRefs();
+  }, REFS_POLL_INTERVAL_MS);
 
   return () => {
     clearInterval(intervalId);
